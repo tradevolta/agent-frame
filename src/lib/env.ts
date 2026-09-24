@@ -10,8 +10,13 @@ export const env = {
   falTrainer: process.env.FAL_TRAINER_MODEL || "fal-ai/flux-lora-portrait-trainer",
   falTrainingSteps: Number(process.env.FAL_TRAINING_STEPS || 2000),
   blobToken: process.env.BLOB_READ_WRITE_TOKEN,
-  resendKey: process.env.RESEND_API_KEY,
-  emailFrom: process.env.EMAIL_FROM || "AgentFrame <studio@agentframe.ai>",
+  // Zoho Mail SMTP. Custom-domain (organization) accounts use smtppro.zoho.com;
+  // free personal accounts use smtp.zoho.com; EU/India data centers use .eu / .in.
+  smtpHost: process.env.SMTP_HOST || "smtppro.zoho.com",
+  smtpPort: Number(process.env.SMTP_PORT || 465),
+  smtpUser: process.env.SMTP_USER,
+  smtpPass: process.env.SMTP_PASS,
+  emailFrom: process.env.EMAIL_FROM || process.env.SMTP_USER || "AgentFrame <studio@agentframe.ai>",
   get signingSecret(): string {
     const secret = process.env.APP_SIGNING_SECRET;
     if (!secret && process.env.NODE_ENV === "production") throw new Error("APP_SIGNING_SECRET must be set in production");

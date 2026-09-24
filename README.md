@@ -22,7 +22,7 @@ See [`docs/MARKETING.md`](docs/MARKETING.md) for domain ideas and the go-to-mark
 | Payments | Stripe Checkout + webhooks | Fake checkout at `/api/mock-checkout` |
 | AI | fal.ai: FLUX LoRA portrait trainer + FLUX LoRA generation | Echoes your uploads back as "results" |
 | Storage | Vercel Blob | Local disk served by `/api/files` |
-| Email | Resend | Logged to the console |
+| Email | Zoho Mail (SMTP via nodemailer) | Logged to the console |
 | Graphics | `next/og` (Satori) rendered on demand | same |
 
 Everything is stateless and serverless, so it scales horizontally on Vercel. The AI work
@@ -59,7 +59,11 @@ npm run e2e:mock
      → copy the signing secret to `STRIPE_WEBHOOK_SECRET`.
    - Optional: create a coupon (e.g. 20% off, once) → `STRIPE_REFERRAL_COUPON_ID` to power referral links.
 4. **fal.ai** → create an API key → `FAL_KEY`. Add about $20 of credit.
-5. **Resend** → verify your domain → `RESEND_API_KEY`, and set `EMAIL_FROM`.
+5. **Zoho Mail** → create (or reuse) a mailbox such as `studio@yourdomain.com`. In Zoho Accounts → Security →
+   App Passwords, generate a password for "AgentFrame". Set `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM`, and `SMTP_HOST`
+   (`smtppro.zoho.com` for custom-domain accounts, `smtp.zoho.com` for free personal ones; use `.eu`/`.in` if your
+   Zoho account lives in those data centers). Make sure SPF and DKIM for your domain are set up in Zoho so
+   emails don't land in spam.
 6. Set `NEXT_PUBLIC_APP_URL=https://yourdomain.com`, `APP_SIGNING_SECRET` (`openssl rand -base64 32`),
    `ADMIN_PASSWORD`, `CRON_SECRET`, plus the `NEXT_PUBLIC_BRAND_*` values. See `.env.example`.
 7. **Domains** tab → add your domain. Redeploy.

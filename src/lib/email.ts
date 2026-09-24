@@ -8,18 +8,32 @@ interface Mail {
   html: string;
 }
 
+type Transport = { sendMail(m: Record<string, unknown>): Promise<unknown> };
+let transport: Promise<Transport> | null = null;
+
+function getTransport(): Promise<Transport> {
+  transport ??= import("nodemailer").then((nodemailer) =>
+    nodemailer.createTransport({
+      host: env.smtpHost,
+      port: env.smtpPort,
+      secure: env.smtpPort === 465, // 465 = SSL, 587 = STARTTLS
+      auth: { user: env.smtpUser, pass: env.smtpPass },
+    }),
+  );
+  return transport;
+}
+
 export async function sendEmail(mail: Mail): Promise<void> {
-  if (!env.resendKey) {
+  if (!env.smtpUser || !env.smtpPass) {
     console.info(`[email:mock] to=${mail.to} subject="${mail.subject}"`);
     return;
   }
   try {
-    const { Resend } = await import("resend");
-    const { error } = await new Resend(env.resendKey).emails.send({ from: env.emailFrom, ...mail });
-    if (error) console.error("[email] send failed", error);
+    const t = await getTransport();
+    await t.sendMail({ from: env.emailFrom, replyTo: brand.supportEmail, ...mail });
   } catch (err) {
     // Email must never break checkout or generation.
-    console.error("[email] send threw", err);
+    console.error("[email] send failed", err);
   }
 }
 

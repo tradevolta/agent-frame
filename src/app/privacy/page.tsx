@@ -22,7 +22,7 @@ export default function Privacy() {
         <li>Generated headshots stay available in your studio so you can download them. Email {brand.supportEmail} and we&apos;ll delete everything within 7 days.</li>
       </ul>
       <h2>Processors</h2>
-      <p>We use trusted providers to run the service: Vercel (hosting & storage), Stripe (payments), fal.ai (AI processing), Neon (database) and Resend (email).</p>
+      <p>We use trusted providers to run the service: Vercel (hosting & storage), Stripe (payments), fal.ai (AI processing), Neon (database) and Zoho (email).</p>
       <h2>Contact</h2>
       <p>{brand.supportEmail}</p>
     </div>

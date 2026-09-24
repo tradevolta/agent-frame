@@ -64,7 +64,7 @@ To rename, set `NEXT_PUBLIC_BRAND_NAME`, `NEXT_PUBLIC_BRAND_DOMAIN`, `NEXT_PUBLI
    schools and instructors offering an affiliate cut (20%) or a student discount code. This is async email, not calls.
 2. **Brokerage onboarding**: email broker-in-charge and recruiting contacts at growing Triangle brokerages with the
    team page link: "matching headshots for every new agent you onboard, $39/agent." One yes = 10–50 orders.
-3. **Email your leads** (from `/admin` → Export CSV) using Resend Broadcasts, Beehiiv or MailerLite:
+3. **Email your leads** (from `/admin` → Export CSV) using Zoho Campaigns (pairs with your Zoho Mail), Beehiiv or MailerLite. Don't send bulk email from your Zoho mailbox: it has daily sending limits and bulk mail from it can get the account suspended:
    a 3-email sequence of tips, then samples, then the founding discount deadline.
    *(Cold outreach must follow CAN-SPAM: real identity, physical address, and an unsubscribe link.)*
 
