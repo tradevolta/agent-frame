@@ -10,7 +10,7 @@ registrar (Cloudflare Registrar or Porkbun are at-cost), and buy the `.com` if y
 
 | Name | Domains to check | Why |
 |---|---|---|
-| **AgentFrame** (current default) | agentframe.ai, getagentframe.com, agentframe.co | Short, covers headshots *and* brand kit, not tied to "realtor" |
+| **AgentFrame** ✅ chosen | **agent-frame.ai** | Short, covers headshots *and* brand kit, not tied to "realtor" |
 | ListingFace | listingface.com, listingface.ai | Memorable, real-estate specific |
 | OpenHouse Studio | openhousestudio.ai, openhouse.studio | Warm, clearly real estate |
 | AgentPortrait | agentportrait.com, agentportraits.ai | Very clear about what it does |
