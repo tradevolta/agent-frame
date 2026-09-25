@@ -41,7 +41,7 @@ export function TeamForm({ styles, colors, seatPrice, minSeats }: Props) {
       {teamStyle === "brand-backdrop" ? (
         <div className="flex flex-wrap gap-2">
           {colors.map((c) => (
-            <button key={c.id} type="button" onClick={() => setBackdropColor(c.id)} className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${backdropColor === c.id ? "border-accent" : "border-line"}`}>
+            <button key={c.id} type="button" onClick={() => setBackdropColor(c.id)} className={`flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 text-sm ${backdropColor === c.id ? "border-accent" : "border-line"}`}>
               <span className="h-4 w-4 rounded-full" style={{ background: c.hex }} />{c.label}
             </button>
           ))}

@@ -121,6 +121,7 @@ export const subscriptions = pgTable("subscriptions", {
   email: text("email").notNull(),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id").unique(),
+  stripeSessionId: text("stripe_session_id"),
   status: text("status").notNull().default("active"),
   currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
   lastShootAt: timestamp("last_shoot_at", { withTimezone: true }),

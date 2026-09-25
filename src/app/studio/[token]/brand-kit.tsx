@@ -63,7 +63,7 @@ export function BrandKit({ token, photos, templates, initialProfile }: Props) {
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[360px_1fr]">
+    <div className="grid gap-8 lg:grid-cols-[360px_minmax(0,1fr)] [&>*]:min-w-0">
       <div className="space-y-6">
         <section className="card p-5">
           <h2 className="font-semibold">Your details</h2>
@@ -103,10 +103,10 @@ export function BrandKit({ token, photos, templates, initialProfile }: Props) {
         </section>
       </div>
 
-      <div>
-        <div className="flex flex-wrap gap-2">
+      <div className="order-first min-w-0 lg:order-none">
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
           {templates.map((t) => (
-            <button key={t.id} onClick={() => setTplId(t.id)} className={`rounded-full border px-3 py-1 text-sm ${t.id === tplId ? "border-accent bg-accent text-on-accent" : "border-line bg-card"}`}>
+            <button key={t.id} onClick={() => setTplId(t.id)} className={`min-h-10 shrink-0 rounded-full border px-4 py-2 text-sm ${t.id === tplId ? "border-accent bg-accent text-on-accent" : "border-line bg-card"}`}>
               {t.name}
             </button>
           ))}

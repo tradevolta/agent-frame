@@ -7,11 +7,38 @@ import { RetryButton } from "./retry-button";
 import { SamplesButton } from "./samples-button";
 import { getSampleUrls } from "@/lib/samples";
 import { STYLES } from "@/lib/styles";
+import { healthChecks } from "@/lib/health";
 
 export const metadata: Metadata = { title: "Admin", robots: { index: false } };
 export const dynamic = "force-dynamic";
 
 export default async function Admin() {
+  const checks = await healthChecks();
+  const pending = checks.filter((c) => !c.ok);
+  const dbReady = checks[0].ok;
+  return (
+    <div className="mx-auto max-w-7xl px-4 py-10">
+      <h1 className="font-display text-3xl">Admin</h1>
+      <section className="card mt-6 p-5" aria-label="Setup checklist">
+        <h2 className="font-semibold">{pending.length ? `Setup: ${pending.length} item${pending.length === 1 ? "" : "s"} left before you can take orders` : "Setup complete"}</h2>
+        <ul className="mt-3 divide-y divide-line text-sm">
+          {checks.map((c) => (
+            <li key={c.name} className="flex flex-col gap-1 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+              <span className="flex items-center gap-2 font-medium">
+                <span className={c.ok ? "text-ok" : "text-bad"}>{c.ok ? "Ready" : "Missing"}</span>
+                {c.name}
+              </span>
+              <span className="text-muted">{c.ok ? c.detail : `${c.detail}. ${c.fix ?? ""}`}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+      {dbReady ? <Dashboard /> : <p className="mt-6 text-sm text-muted">Orders, teams, leads and sample photos appear here once the database is connected.</p>}
+    </div>
+  );
+}
+
+async function Dashboard() {
   const db = await getDb();
   const [[totals], recent, teamRows, leadRows, [subCount]] = await Promise.all([
     db
@@ -33,8 +60,7 @@ export default async function Admin() {
   const teamRevenue = teamRows.filter((t) => t.status === "active").reduce((s, t) => s + t.amountCents, 0);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10">
-      <h1 className="font-display text-3xl">Admin</h1>
+    <div>
       <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-6">
         <Stat label="Paid orders" value={String(totals.paid)} />
         <Stat label="Last 7 days" value={String(totals.last7)} />

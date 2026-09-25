@@ -1,6 +1,7 @@
 import "server-only";
 import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
 import * as schema from "./schema";
+import { ConfigError } from "../config-error";
 
 // Production: Neon serverless Postgres (Vercel Marketplace integration sets DATABASE_URL).
 // Local dev / tests: embedded PGlite, auto-migrated, so no Postgres install is needed.
@@ -16,7 +17,7 @@ async function create(): Promise<DB> {
   }
   if (process.env.VERCEL) {
     // PGlite needs a writable, persistent disk; serverless has neither.
-    throw new Error("DATABASE_URL is not set. Add Neon Postgres in the Vercel project's Storage tab.");
+    throw new ConfigError("database", "DATABASE_URL is not set. Add Neon Postgres in the Vercel project's Storage tab.");
   }
   const { PGlite } = await import("@electric-sql/pglite");
   const { drizzle } = await import("drizzle-orm/pglite");

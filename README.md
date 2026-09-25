@@ -71,6 +71,13 @@ npm run e2e:mock
    fictional agents, about $0.75 total) and shows them on the site. Then place a real $29 order
    yourself with a 100% Stripe promo code to check the quality of actual shoots.
 
+`/admin` starts with a **setup checklist** showing which services are connected. Until the database and
+Stripe are connected, visitors see a clear "not available yet" message instead of an error.
+
+Stripe notifications can't reach a `*.vercel.app` address while Vercel Authentication is on. Connect your
+domain before taking real orders. As a fallback, a studio page also asks Stripe directly whether a pending
+order was paid.
+
 Cron jobs (`vercel.json`): daily webhook recovery sync and daily selfie purge (7-day retention).
 On Vercel Pro you can make the sync hourly.
 

@@ -48,14 +48,14 @@ export function Gallery({ token, view, styles, chosenStyles, onChange, setView }
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap gap-2 text-sm">
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 text-sm sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
           {["all", "favorites", ...chosenStyles].map((f) => (
-            <button key={f} onClick={() => setFilter(f)} className={`rounded-full border px-3 py-1 ${filter === f ? "border-accent bg-accent text-on-accent" : "border-line bg-card"}`}>
+            <button key={f} onClick={() => setFilter(f)} className={`min-h-10 shrink-0 rounded-full border px-4 py-2 ${filter === f ? "border-accent bg-accent text-on-accent" : "border-line bg-card"}`}>
               {f === "all" ? `All (${view.photos.length})` : f === "favorites" ? `Favorites (${favCount})` : name(f)}
             </button>
           ))}
         </div>
-        <div className="flex gap-2">
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
           <a href={`/api/studio/${token}/download`} className="btn-primary !py-2">Download all</a>
           {favCount > 0 ? <a href={`/api/studio/${token}/download?favorites=1`} className="btn-ghost !py-2">Download favorites</a> : null}
         </div>
@@ -72,7 +72,7 @@ export function Gallery({ token, view, styles, chosenStyles, onChange, setView }
             </button>
             <button
               onClick={() => toggleFav(p)}
-              className={`absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full text-lg ${p.favorite ? "bg-accent text-on-accent" : "bg-white/85 text-ink"}`}
+              className={`absolute right-2 top-2 grid h-10 w-10 place-items-center rounded-full text-lg ${p.favorite ? "bg-accent text-on-accent" : "bg-white/85 text-ink"}`}
               aria-label={p.favorite ? "Remove favorite" : "Add favorite"}
             >
               <Star size={16} weight={p.favorite ? "fill" : "regular"} aria-hidden />

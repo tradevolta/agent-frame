@@ -15,6 +15,13 @@
       "when": 1790306901182,
       "tag": "0001_site_assets",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790310338026,
+      "tag": "0002_subscription_session",
+      "breakpoints": true
     }
   ]
 }

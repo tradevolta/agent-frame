@@ -93,7 +93,7 @@ p {
 }
 
 @utility btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold whitespace-nowrap transition duration-200 ease-out active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100;
+  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold whitespace-nowrap transition duration-200 ease-out active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100;
 }
 @utility btn-primary {
   @apply btn bg-accent text-on-accent hover:bg-accent-strong;
@@ -102,7 +102,7 @@ p {
   @apply btn border border-line bg-card text-ink hover:border-ink/40;
 }
 @utility input {
-  @apply w-full rounded-lg border border-line bg-card px-3 py-2.5 text-sm text-ink transition duration-200 outline-none placeholder:text-muted/80 focus:border-accent focus:ring-2 focus:ring-accent/20;
+  @apply w-full rounded-lg border border-line bg-card px-3 py-3 text-base text-ink sm:py-2.5 sm:text-sm transition duration-200 outline-none placeholder:text-muted/80 focus:border-accent focus:ring-2 focus:ring-accent/20;
 }
 @utility label {
   @apply mb-1.5 block text-sm font-medium text-ink;

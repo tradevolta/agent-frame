@@ -78,7 +78,7 @@ export function Studio(props: Props) {
           {props.plan.brandKit ? (
             <div className="mb-6 inline-flex rounded-lg border border-line bg-card p-1 text-sm">
               {(["photos", "brand"] as const).map((t) => (
-                <button key={t} onClick={() => setTab(t)} className={`rounded-md px-4 py-2 font-medium ${tab === t ? "bg-accent text-on-accent" : "text-muted"}`}>
+                <button key={t} onClick={() => setTab(t)} className={`min-h-11 rounded-md px-5 py-2.5 font-medium ${tab === t ? "bg-accent text-on-accent" : "text-muted"}`}>
                   {t === "photos" ? "Headshots" : "Brand Kit"}
                 </button>
               ))}

@@ -9,10 +9,11 @@ import { env } from "./env";
 import { PLANS, REFRESH_PLAN, TEAM_MIN_SEATS, TEAM_MAX_SEATS, type PlanId } from "./plans";
 import { createPendingOrder, markOrderPaid, referralCodeExists, UserError } from "./pipeline";
 import { randomToken, shortCode } from "./tokens";
+import { ConfigError } from "./config-error";
 
 let stripe: Stripe | null = null;
 export function getStripe(): Stripe {
-  if (!env.stripeSecret) throw new Error("STRIPE_SECRET_KEY is not set");
+  if (!env.stripeSecret) throw new ConfigError("payments", "STRIPE_SECRET_KEY is not set. Add it in Vercel → Settings → Environment Variables.");
   stripe ??= new Stripe(env.stripeSecret);
   return stripe;
 }
@@ -24,6 +25,7 @@ export type CheckoutRequest =
 
 /** Returns the URL to send the browser to (Stripe Checkout, or the mock checkout in dev). */
 export async function createCheckout(req: CheckoutRequest): Promise<string> {
+  if (!env.allowMockPayments) getStripe(); // throws ConfigError early if Stripe isn't set up
   if (req.kind === "order") return orderCheckout(req);
   if (req.kind === "team") return teamCheckout(req);
   return subscriptionCheckout(req);
@@ -133,6 +135,7 @@ async function subscriptionCheckout(req: Extract<CheckoutRequest, { kind: "subsc
     success_url: appUrl(`/account/${sub.token}?paid=1`),
     cancel_url: appUrl(`/?canceled=1#pricing`),
   });
+  await db.update(subscriptions).set({ stripeSessionId: session.id }).where(eq(subscriptions.id, sub.id));
   return session.url!;
 }
 
@@ -239,4 +242,59 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
     await db.delete(events).where(eq(events.id, event.id));
     throw err;
   }
+}
+
+// ---------------------------------------------------------------- reconciliation
+
+/**
+ * Webhook fallback: when a customer returns from Stripe and we still show
+ * "pending", ask Stripe directly. Fulfillment is idempotent, so racing the
+ * webhook is safe. Covers blocked or delayed webhooks (e.g. a protected URL).
+ */
+async function paidSession(sessionId: string | null | undefined) {
+  if (!sessionId || !env.stripeSecret || sessionId.startsWith("mock_")) return null;
+  try {
+    const s = await getStripe().checkout.sessions.retrieve(sessionId);
+    return s.payment_status === "paid" || s.payment_status === "no_payment_required" ? s : null;
+  } catch (err) {
+    console.error("[reconcile]", sessionId, err);
+    return null;
+  }
+}
+
+export async function reconcileOrder(order: { id: string; status: string; stripeSessionId: string | null }) {
+  if (order.status !== "pending_payment") return;
+  const s = await paidSession(order.stripeSessionId);
+  if (!s) return;
+  await fulfillOrder(order.id, {
+    email: s.customer_details?.email ?? s.customer_email,
+    amountCents: s.amount_total ?? 0,
+    sessionId: s.id,
+    paymentIntent: typeof s.payment_intent === "string" ? s.payment_intent : null,
+  });
+}
+
+export async function reconcileTeam(team: { id: string; status: string; stripeSessionId: string | null }) {
+  if (team.status !== "pending_payment") return;
+  const s = await paidSession(team.stripeSessionId);
+  if (s) await fulfillTeam(team.id, s.amount_total ?? 0);
+}
+
+export async function reconcileSubscription(sub: { id: string; status: string; stripeSessionId: string | null }) {
+  if (sub.status !== "pending_payment") return;
+  const s = await paidSession(sub.stripeSessionId);
+  if (!s) return;
+  const stripeSubId = typeof s.subscription === "string" ? s.subscription : s.subscription?.id;
+  let periodEnd: Date | null = null;
+  if (stripeSubId) {
+    const full = await getStripe().subscriptions.retrieve(stripeSubId);
+    const end = full.items.data[0]?.current_period_end;
+    if (end) periodEnd = new Date(end * 1000);
+  }
+  await fulfillSubscription(sub.id, {
+    email: s.customer_details?.email ?? s.customer_email,
+    customerId: typeof s.customer === "string" ? s.customer : s.customer?.id,
+    stripeSubscriptionId: stripeSubId,
+    periodEnd,
+  });
 }

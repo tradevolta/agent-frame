@@ -96,7 +96,7 @@ export function UploadStep(props: Props) {
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
+    <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] [&>*]:min-w-0">
       <div className="space-y-8">
         <section className="card p-6">
           <h2 className="text-lg font-semibold">1. Upload {props.minUploads}-{props.maxUploads} photos of yourself</h2>
@@ -125,7 +125,7 @@ export function UploadStep(props: Props) {
                 <div key={u.id} className="group relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={u.url} alt="" className="aspect-square w-full rounded-md object-cover" />
-                  <button onClick={() => remove(u.id)} className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-black/70 text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus:opacity-100 [@media(hover:none)]:opacity-100" aria-label="Remove photo">
+                  <button onClick={() => remove(u.id)} className="absolute right-1 top-1 grid h-8 w-8 place-items-center rounded-full bg-black/70 text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus:opacity-100 [@media(hover:none)]:opacity-100" aria-label="Remove photo">
                     <X size={14} weight="bold" className="mx-auto" aria-hidden />
                   </button>
                 </div>
@@ -160,7 +160,7 @@ export function UploadStep(props: Props) {
                 <span className="label">Brand color backdrop</span>
                 <div className="flex flex-wrap gap-2">
                   {props.colors.map((c) => (
-                    <button key={c.id} onClick={() => setColor(c.id)} className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${color === c.id ? "border-accent" : "border-line"}`}>
+                    <button key={c.id} onClick={() => setColor(c.id)} className={`flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 text-sm ${color === c.id ? "border-accent" : "border-line"}`}>
                       <span className="h-4 w-4 rounded-full" style={{ background: c.hex }} />
                       {c.label}
                     </button>

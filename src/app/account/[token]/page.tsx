@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSubscriptionByToken, nextShootDate, subscriptionOrders } from "@/lib/accounts";
 import { isToken } from "@/lib/tokens";
+import { reconcileSubscription } from "@/lib/payments";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { StartShootButton } from "./start-shoot";
 
@@ -11,8 +12,12 @@ export const metadata: Metadata = { title: "Your account", robots: { index: fals
 export default async function AccountPage({ params }: PageProps<"/account/[token]">) {
   const { token } = await params;
   if (!isToken(token)) notFound();
-  const sub = await getSubscriptionByToken(token);
+  let sub = await getSubscriptionByToken(token);
   if (!sub) notFound();
+  if (sub.status === "pending_payment") {
+    await reconcileSubscription(sub);
+    sub = (await getSubscriptionByToken(token)) ?? sub;
+  }
   const shoots = await subscriptionOrders(sub.id);
   const next = nextShootDate(sub);
   const eligible = (sub.status === "active" || sub.status === "trialing") && (!next || next <= new Date());

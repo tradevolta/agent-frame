@@ -7,14 +7,19 @@ import { TEMPLATES } from "@/lib/brandkit";
 import { isToken } from "@/lib/tokens";
 import { appUrl } from "@/lib/brand";
 import { Studio } from "./studio";
+import { reconcileOrder } from "@/lib/payments";
 
 export const metadata: Metadata = { title: "Your studio", robots: { index: false, follow: false } };
 
 export default async function StudioPage({ params }: PageProps<"/studio/[token]">) {
   const { token } = await params;
   if (!isToken(token)) notFound();
-  const order = await getOrderByToken(token);
+  let order = await getOrderByToken(token);
   if (!order) notFound();
+  if (order.status === "pending_payment") {
+    await reconcileOrder(order);
+    order = (await getOrderByToken(token)) ?? order;
+  }
   const plan = isPlanId(order.plan) ? PLANS[order.plan] : PLANS.starter;
   const [uploads, photos, progress] = await Promise.all([listUploads(order.id), orderPhotos(order.id), orderJobsSummary(order.id)]);
 

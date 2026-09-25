@@ -7,6 +7,7 @@ import { extractImages } from "./ai";
 import { persistRemote } from "./storage";
 import { STYLES, buildSamplePrompt, getStyle } from "./styles";
 import { UserError } from "./pipeline";
+import { ConfigError } from "./config-error";
 
 // Marketing sample photos: one AI-generated FICTIONAL agent per style, made on
 // the server with fal.ai (the same FLUX family customers' shoots use). The site
@@ -70,6 +71,9 @@ async function generateOne(styleId: string): Promise<string> {
 /** Generate (or regenerate) samples. Returns per-style results. */
 export async function generateSamples(styleIds: string[] = STYLES.map((s) => s.id)) {
   if (isMockAi()) throw new UserError("Set FAL_KEY in Vercel first. Sample photos are generated with fal.ai.");
+  // Check storage before spending money on generation.
+  await getDb(); // throws ConfigError if the database isn't connected
+  if (process.env.VERCEL && !env.blobToken) throw new ConfigError("storage", "BLOB_READ_WRITE_TOKEN is not set. Add Blob storage in Vercel.");
   const results = await Promise.allSettled(styleIds.map((id) => generateOne(id)));
   return styleIds.map((id, i) => {
     const r = results[i];

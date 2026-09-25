@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTeamByToken, teamMembers } from "@/lib/accounts";
+import { reconcileTeam } from "@/lib/payments";
 import { appUrl } from "@/lib/brand";
 import { isToken } from "@/lib/tokens";
 import { getStyle } from "@/lib/styles";
@@ -20,8 +21,12 @@ const LABEL: Record<string, string> = {
 export default async function TeamDashboard({ params }: PageProps<"/team/[token]">) {
   const { token } = await params;
   if (!isToken(token)) notFound();
-  const team = await getTeamByToken(token);
+  let team = await getTeamByToken(token);
   if (!team) notFound();
+  if (team.status === "pending_payment") {
+    await reconcileTeam(team);
+    team = (await getTeamByToken(token)) ?? team;
+  }
   const members = await teamMembers(team.id);
   const done = members.filter((m) => m.status === "completed").length;
 

@@ -35,7 +35,7 @@ export default async function CityPage({ params }: PageProps<"/realtor-headshots
   return (
     <>
       <section className="mx-auto max-w-6xl px-4 pb-8 pt-14">
-        <nav className="text-xs text-muted"><Link href="/realtor-headshots">Headshots by city</Link> / {city.name}</nav>
+        <nav className="text-xs text-muted"><Link href="/realtor-headshots" className="inline-block py-3">Headshots by city</Link> / {city.name}</nav>
         <h1 className="mt-3 max-w-3xl font-display text-4xl md:text-5xl leading-tight">Realtor headshots for {city.name}, {city.stateCode} agents</h1>
         <p className="mt-4 max-w-2xl text-lg text-muted">{city.blurb}</p>
         <p className="mt-2 max-w-2xl text-muted">Skip the studio booking. Upload a few selfies and get realistic headshots plus ready-to-post listing graphics in about an hour, from {formatUsd(PLANS.starter.priceCents)}.</p>
