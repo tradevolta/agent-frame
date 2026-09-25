@@ -34,9 +34,10 @@ with a clean and credible language, leaning toward Tailwind v4 + Geist + restrai
 
 ## Still open
 
-1. **Real sample images (4.8).** The 12 style tiles are gradient placeholders. The skill is clear that a page
-   without real imagery is incomplete. Fix: run real shoots, then drop outputs in
-   `public/samples/<style-id>.jpg` (e.g. `front-porch.jpg`). The tiles pick them up automatically.
+1. **Real sample images (4.8).** Built: Admin → "Generate sample photos" creates one photo per style
+   with fal.ai FLUX Pro 1.1 Ultra (about $0.06 each) and puts it on the homepage, city pages and the hero
+   Brand Kit graphics. Samples show fictional people and the site says so; they are never presented
+   as customer results. Needs `FAL_KEY`, the database and Blob storage configured in Vercel.
 2. **Pricing uses three columns (4.9 / redesign audit).** Kept on purpose: the recommended plan is
    highlighted by color and border, which the skill allows, and three columns are the clearest way to compare plans.
 3. **Brand Kit graphics use a warm off-white panel.** These are the customer's marketing output, not site

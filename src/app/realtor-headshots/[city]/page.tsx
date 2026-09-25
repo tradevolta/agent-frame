@@ -7,11 +7,13 @@ import { PLANS, formatUsd } from "@/lib/plans";
 import { StyleCard } from "@/components/samples";
 import { Pricing } from "@/components/pricing";
 import { Faq } from "@/components/faq";
+import { getSampleUrls } from "@/lib/samples";
 
 export function generateStaticParams() {
   return CITIES.map((c) => ({ city: c.slug }));
 }
 export const dynamicParams = false;
+export const revalidate = 300;
 
 export async function generateMetadata({ params }: PageProps<"/realtor-headshots/[city]">): Promise<Metadata> {
   const city = getCity((await params).city);
@@ -27,6 +29,7 @@ export default async function CityPage({ params }: PageProps<"/realtor-headshots
   const city = getCity((await params).city);
   if (!city) notFound();
   const styles = city.styles.map(getStyle).filter((s): s is HeadshotStyle => !!s);
+  const samples = await getSampleUrls();
   const nearby = (city.nearby ?? []).map(getCity).filter((c) => !!c);
 
   return (
@@ -44,7 +47,7 @@ export default async function CityPage({ params }: PageProps<"/realtor-headshots
       <section className="mx-auto max-w-6xl px-4 py-8">
         <h2 className="font-display text-2xl">Popular styles with {city.name} agents</h2>
         <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-          {styles.map((s) => <StyleCard key={s.id} style={s} />)}
+          {styles.map((s) => <StyleCard key={s.id} style={s} src={samples[s.id]} />)}
         </div>
       </section>
       <Pricing />

@@ -1,4 +1,5 @@
 import { getTemplate, renderBrandKit } from "@/lib/brandkit";
+import { getSampleUrls } from "@/lib/samples";
 
 // Real Brand Kit output for the marketing pages, rendered by the same code
 // customers use (with an initials monogram in place of a headshot).
@@ -15,14 +16,17 @@ export async function GET(_req: Request, { params }: { params: Promise<{ templat
   const tpl = getTemplate(template);
   const sample = SAMPLES[template];
   if (!tpl || !sample) return new Response("Not found", { status: 404 });
+  // Use the Classic Studio sample (a fictional agent) once it exists; initials until then.
+  const photoUrl = (await getSampleUrls())["studio-gray"];
   const res = await renderBrandKit({
     template: tpl,
+    photoUrl,
     profile: { fullName: "Dana Whitfield", title: "REALTOR®", brokerage: "Sample Realty Co.", phone: "(919) 555-0148", brandColor: sample.color },
     address: sample.address,
     price: sample.price,
     details: sample.details,
     date: sample.date,
   });
-  res.headers.set("Cache-Control", "public, max-age=86400, s-maxage=604800");
+  res.headers.set("Cache-Control", photoUrl ? "public, max-age=3600, s-maxage=86400" : "public, max-age=300");
   return res;
 }

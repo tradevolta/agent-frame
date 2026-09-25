@@ -8,10 +8,15 @@ import { StyleCard } from "@/components/samples";
 import { Pricing } from "@/components/pricing";
 import { Faq, faqJsonLd } from "@/components/faq";
 import { NewsletterForm } from "@/components/newsletter-form";
+import { getSampleUrls } from "@/lib/samples";
 
 const DEMO = (t: string) => `/api/brand-kit-demo/${t}`;
 
-export default function Home() {
+// Re-render at most every 5 minutes so newly generated samples show up.
+export const revalidate = 300;
+
+export default async function Home() {
+  const samples = await getSampleUrls();
   const productLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -120,9 +125,12 @@ export default function Home() {
         <p className="mt-3 max-w-[60ch] text-muted">Generic headshot apps give you corporate gray. You sell homes, so your photos should look like it.</p>
         <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {STYLES.map((s) => (
-            <StyleCard key={s.id} style={s} />
+            <StyleCard key={s.id} style={s} src={samples[s.id]} />
           ))}
         </div>
+        {Object.keys(samples).length ? (
+          <p className="mt-6 text-xs text-muted">Examples show AI-generated fictional people in each style. Your headshots are created from your own photos.</p>
+        ) : null}
       </section>
 
       {/* Brand kit: same light theme, tinted band */}

@@ -139,6 +139,14 @@ export function buildPrompt(style: HeadshotStyle, opts: PromptOptions): string {
   ].join(", ");
 }
 
+/** Prompt for a marketing sample: same scene/attire, a fictional person instead of the trained subject. */
+export function buildSamplePrompt(style: HeadshotStyle, person: string): string {
+  return buildPrompt(style, { subject: "person", attire: "style_default", backdropColor: "navy" }).replace(
+    `${TRIGGER} person`,
+    person,
+  );
+}
+
 /** Which styles an order gets: Pro/Team get everything, Starter picks N. */
 export function resolveStyles(selected: string[], styleCount: number, teamStyle?: string | null): string[] {
   const valid = selected.filter((id) => getStyle(id));

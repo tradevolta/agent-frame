@@ -135,6 +135,14 @@ export const leads = pgTable("leads", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/** Site-wide generated assets, e.g. style sample photos (key = "sample:<style-id>"). */
+export const siteAssets = pgTable("site_assets", {
+  key: text("key").primaryKey(),
+  url: text("url").notNull(),
+  pathname: text("pathname").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const events = pgTable("processed_events", {
   id: text("id").primaryKey(), // Stripe event id, for webhook idempotency
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

@@ -3,8 +3,8 @@ import path from "node:path";
 import Image from "next/image";
 import type { HeadshotStyle } from "@/lib/styles";
 
-// Style preview card. The gradient approximates each scene until real sample
-// outputs are dropped into public/samples/<style-id>.jpg (TODO before launch).
+// Style preview card. Shows the AI-generated sample (admin → "Generate sample
+// photos"), else a file in public/samples/<style-id>.jpg, else a scene gradient.
 const GRADIENTS: Record<string, string> = {
   "studio-gray": "from-stone-300 to-stone-500",
   "bright-white": "from-white to-stone-200",
@@ -24,13 +24,13 @@ function hasSample(id: string) {
   return existsSync(path.join(process.cwd(), "public", "samples", `${id}.jpg`));
 }
 
-export function StyleCard({ style }: { style: HeadshotStyle }) {
-  const sample = hasSample(style.id);
+export function StyleCard({ style, src }: { style: HeadshotStyle; src?: string }) {
+  const image = src ?? (hasSample(style.id) ? `/samples/${style.id}.jpg` : null);
   return (
     <figure>
       <div className={`relative aspect-[4/5] overflow-hidden rounded-2xl bg-gradient-to-b ${GRADIENTS[style.id] ?? "from-stone-200 to-stone-400"}`}>
-        {sample ? (
-          <Image src={`/samples/${style.id}.jpg`} alt={`${style.name} realtor headshot example`} fill className="object-cover" sizes="(max-width: 768px) 50vw, 25vw" />
+        {image ? (
+          <Image src={image} alt={`${style.name} style example: AI-generated photo of a fictional agent`} fill unoptimized={!image.startsWith("https://")} className="object-cover" sizes="(max-width: 768px) 50vw, 25vw" />
         ) : null}
       </div>
       <figcaption className="mt-3">

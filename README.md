@@ -67,9 +67,9 @@ npm run e2e:mock
 6. Set `NEXT_PUBLIC_APP_URL=https://yourdomain.com`, `APP_SIGNING_SECRET` (`openssl rand -base64 32`),
    `ADMIN_PASSWORD`, `CRON_SECRET`, plus the `NEXT_PUBLIC_BRAND_*` values. See `.env.example`.
 7. **Domains** tab → add your domain. Redeploy.
-8. Place a real $29 order yourself with a 100% Stripe promo code. Check the result quality,
-   then save your best outputs as `public/samples/<style-id>.jpg` (e.g. `front-porch.jpg`).
-   They automatically replace the illustrated placeholders on the site.
+8. Open `/admin` → **Generate sample photos**. This creates the 12 style samples (AI-generated
+   fictional agents, about $0.75 total) and shows them on the site. Then place a real $29 order
+   yourself with a 100% Stripe promo code to check the quality of actual shoots.
 
 Cron jobs (`vercel.json`): daily webhook recovery sync and daily selfie purge (7-day retention).
 On Vercel Pro you can make the sync hourly.

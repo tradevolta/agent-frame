@@ -4,6 +4,9 @@ import { getDb } from "@/lib/db";
 import { leads, orders, subscriptions, teams } from "@/lib/db/schema";
 import { formatUsd } from "@/lib/plans";
 import { RetryButton } from "./retry-button";
+import { SamplesButton } from "./samples-button";
+import { getSampleUrls } from "@/lib/samples";
+import { STYLES } from "@/lib/styles";
 
 export const metadata: Metadata = { title: "Admin", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -26,6 +29,7 @@ export default async function Admin() {
     db.select().from(leads).orderBy(desc(leads.createdAt)).limit(50),
     db.select({ n: sql<number>`count(*) filter (where ${subscriptions.status} = 'active')::int` }).from(subscriptions),
   ]);
+  const samples = await getSampleUrls();
   const teamRevenue = teamRows.filter((t) => t.status === "active").reduce((s, t) => s + t.amountCents, 0);
 
   return (
@@ -39,6 +43,7 @@ export default async function Admin() {
         <Stat label="Active subscribers" value={String(subCount.n)} />
         <Stat label="Abandoned checkouts" value={String(totals.abandoned)} />
       </div>
+      <div className="mt-6"><SamplesButton have={Object.keys(samples).length} total={STYLES.length} /></div>
       {totals.failed ? <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-bad">{totals.failed} failed order(s) need attention: retry below or refund in Stripe.</p> : null}
 
       <h2 className="mt-10 text-lg font-semibold">Recent orders</h2>
