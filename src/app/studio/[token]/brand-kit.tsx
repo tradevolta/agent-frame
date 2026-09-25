@@ -92,7 +92,7 @@ export function BrandKit({ token, photos, templates, initialProfile }: Props) {
                 <input
                   id={k}
                   className="input"
-                  placeholder={{ address: "412 Oak Hollow Dr, Wake Forest", price: "$489,000", details: "4 bd • 3 ba • 2,450 sqft", date: "Sat, Oct 4 · 1–3 PM" }[k]}
+                  placeholder={{ address: "412 Oak Hollow Dr, Wake Forest", price: "$489,000", details: "4 bd • 3 ba • 2,450 sqft", date: "Sat, Oct 4 · 1-3 PM" }[k]}
                   value={fields[k]}
                   onChange={(e) => setFields({ ...fields, [k]: e.target.value })}
                 />
@@ -106,20 +106,20 @@ export function BrandKit({ token, photos, templates, initialProfile }: Props) {
       <div>
         <div className="flex flex-wrap gap-2">
           {templates.map((t) => (
-            <button key={t.id} onClick={() => setTplId(t.id)} className={`rounded-full border px-3 py-1 text-sm ${t.id === tplId ? "border-navy bg-navy text-white" : "border-line bg-card"}`}>
+            <button key={t.id} onClick={() => setTplId(t.id)} className={`rounded-full border px-3 py-1 text-sm ${t.id === tplId ? "border-accent bg-accent text-on-accent" : "border-line bg-card"}`}>
               {t.name}
             </button>
           ))}
         </div>
         <div className="mt-4 flex gap-2 overflow-x-auto pb-2">
           {choices.slice(0, 20).map((p) => (
-            <button key={p.id} onClick={() => setPhotoId(p.id)} className={`shrink-0 overflow-hidden rounded-md border-2 ${p.id === photoId ? "border-gold" : "border-transparent"}`}>
+            <button key={p.id} onClick={() => setPhotoId(p.id)} className={`shrink-0 overflow-hidden rounded-md border-2 ${p.id === photoId ? "border-accent" : "border-transparent"}`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={p.url} alt="" className="h-16 w-12 object-cover" />
             </button>
           ))}
         </div>
-        <p className="text-xs text-muted">{favorites.length ? "Showing your ★ favorites." : "Tip: star your favorite headshots to see them here."}</p>
+        <p className="text-xs text-muted">{favorites.length ? "Showing your starred favorites." : "Tip: star your favorite headshots to see them here."}</p>
         <div className="card mt-4 grid place-items-center bg-paper p-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img key={src} src={src} alt={`${tpl.name} preview`} className="max-h-[640px] w-auto rounded-lg shadow-md" style={{ aspectRatio: `${tpl.width}/${tpl.height}` }} />

@@ -10,10 +10,10 @@ export const metadata: Metadata = {
 export default function BlogIndex() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-14">
-      <h1 className="font-display text-4xl font-semibold">Guides for agents</h1>
+      <h1 className="font-display text-3xl md:text-4xl">Guides for agents</h1>
       <div className="mt-8 space-y-4">
         {POSTS.map((p) => (
-          <Link key={p.slug} href={`/blog/${p.slug}`} className="card block p-6 hover:border-navy">
+          <Link key={p.slug} href={`/blog/${p.slug}`} className="card block p-6 hover:border-accent">
             <h2 className="text-lg font-semibold">{p.title}</h2>
             <p className="mt-1 text-sm text-muted">{p.description}</p>
             <p className="mt-2 text-xs text-muted">{p.readMinutes} min read</p>

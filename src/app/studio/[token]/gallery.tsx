@@ -1,4 +1,5 @@
 "use client";
+import { Star } from "@phosphor-icons/react";
 import { useMemo, useState } from "react";
 import { postJson, type PhotoView, type StatusView, type StyleView } from "./types";
 
@@ -49,8 +50,8 @@ export function Gallery({ token, view, styles, chosenStyles, onChange, setView }
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap gap-2 text-sm">
           {["all", "favorites", ...chosenStyles].map((f) => (
-            <button key={f} onClick={() => setFilter(f)} className={`rounded-full border px-3 py-1 ${filter === f ? "border-navy bg-navy text-white" : "border-line bg-card"}`}>
-              {f === "all" ? `All (${view.photos.length})` : f === "favorites" ? `★ Favorites (${favCount})` : name(f)}
+            <button key={f} onClick={() => setFilter(f)} className={`rounded-full border px-3 py-1 ${filter === f ? "border-accent bg-accent text-on-accent" : "border-line bg-card"}`}>
+              {f === "all" ? `All (${view.photos.length})` : f === "favorites" ? `Favorites (${favCount})` : name(f)}
             </button>
           ))}
         </div>
@@ -60,7 +61,7 @@ export function Gallery({ token, view, styles, chosenStyles, onChange, setView }
         </div>
       </div>
 
-      {msg ? <p className="mt-4 rounded-lg bg-gold-50 p-3 text-sm">{msg}</p> : null}
+      {msg ? <p className="mt-4 rounded-lg bg-accent-soft p-3 text-sm">{msg}</p> : null}
 
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {shown.map((p) => (
@@ -71,10 +72,10 @@ export function Gallery({ token, view, styles, chosenStyles, onChange, setView }
             </button>
             <button
               onClick={() => toggleFav(p)}
-              className={`absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full text-lg ${p.favorite ? "bg-gold text-white" : "bg-white/85 text-ink"}`}
+              className={`absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full text-lg ${p.favorite ? "bg-accent text-on-accent" : "bg-white/85 text-ink"}`}
               aria-label={p.favorite ? "Remove favorite" : "Add favorite"}
             >
-              ★
+              <Star size={16} weight={p.favorite ? "fill" : "regular"} aria-hidden />
             </button>
           </div>
         ))}
@@ -88,7 +89,7 @@ export function Gallery({ token, view, styles, chosenStyles, onChange, setView }
           </button>
         </div>
       ) : (
-        <p className="mt-6 text-sm text-muted">Tip: filter by a style to redo it. You have {view.redosRemaining} free redo{view.redosRemaining === 1 ? "" : "s"}. Tap ★ to mark the ones that really look like you.</p>
+        <p className="mt-6 text-sm text-muted">Tip: filter by a style to redo it. You have {view.redosRemaining} free redo{view.redosRemaining === 1 ? "" : "s"}. Tap the star to mark the ones that really look like you.</p>
       )}
 
       {lightbox ? (

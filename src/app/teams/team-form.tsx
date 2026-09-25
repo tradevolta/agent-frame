@@ -41,7 +41,7 @@ export function TeamForm({ styles, colors, seatPrice, minSeats }: Props) {
       {teamStyle === "brand-backdrop" ? (
         <div className="flex flex-wrap gap-2">
           {colors.map((c) => (
-            <button key={c.id} type="button" onClick={() => setBackdropColor(c.id)} className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${backdropColor === c.id ? "border-navy" : "border-line"}`}>
+            <button key={c.id} type="button" onClick={() => setBackdropColor(c.id)} className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${backdropColor === c.id ? "border-accent" : "border-line"}`}>
               <span className="h-4 w-4 rounded-full" style={{ background: c.hex }} />{c.label}
             </button>
           ))}
@@ -49,7 +49,7 @@ export function TeamForm({ styles, colors, seatPrice, minSeats }: Props) {
       ) : null}
       <div className="flex items-baseline justify-between border-t border-line pt-4">
         <span className="text-muted">Total</span>
-        <span className="font-display text-3xl font-semibold">{formatUsd(seatPrice * Math.max(seats, 0))}</span>
+        <span className="font-display text-3xl">{formatUsd(seatPrice * Math.max(seats, 0))}</span>
       </div>
       {valid ? (
         <CheckoutButton body={{ kind: "team", teamName, email, seats, teamStyle, backdropColor }} label="Continue to secure checkout" />

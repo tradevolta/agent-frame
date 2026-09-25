@@ -18,7 +18,7 @@ export function StartShootButton({ token }: { token: string }) {
   }
   return (
     <div>
-      <button className="btn-gold w-full" onClick={go} disabled={busy}>{busy ? "Starting…" : "Start my new shoot"}</button>
+      <button className="btn-primary w-full" onClick={go} disabled={busy}>{busy ? "Starting…" : "Start my new shoot"}</button>
       {error ? <p className="mt-2 text-sm text-bad">{error}</p> : null}
     </div>
   );

@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Terms & Refunds" };
 export default function Terms() {
   return (
     <div className="prose-simple mx-auto max-w-2xl px-4 py-14">
-      <h1 className="font-display text-4xl font-semibold">Terms of Service & Refund Policy</h1>
+      <h1 className="font-display text-3xl md:text-4xl">Terms of Service & Refund Policy</h1>
       <p><em>Last updated: September 2026. Have this reviewed by a lawyer before launch.</em></p>
       <h2>Your photos</h2>
       <p>You may only upload photos of yourself, or of someone who has given you explicit permission. You confirm you have the rights to the photos you upload.</p>

@@ -1,60 +1,125 @@
 @import "tailwindcss";
 
+/*
+ * Design tokens. One accent (cobalt), one cool neutral family, light + dark.
+ * Radius system: controls (buttons, inputs) 8px, surfaces (cards) 16px, chips full.
+ */
+:root {
+  --paper: #f6f7f9;
+  --card: #fdfdfe;
+  --ink: #14161a;
+  --muted: #5b6270;
+  --line: #e2e5ea;
+  --accent: #2446a6;
+  --accent-strong: #1b3787;
+  --accent-soft: #e9eef9;
+  --on-accent: #fdfdfe;
+  --ok: #1f7a4d;
+  --bad: #b42318;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #0e1014;
+    --card: #161a20;
+    --ink: #eceef2;
+    --muted: #9aa2b1;
+    --line: #272c35;
+    --accent: #86a0ee;
+    --accent-strong: #a8bbf4;
+    --accent-soft: #19213a;
+    --on-accent: #0e1014;
+    --ok: #4cc38a;
+    --bad: #f07167;
+  }
+}
+
 @theme inline {
-  --color-paper: #faf8f5;
-  --color-card: #ffffff;
-  --color-ink: #1c1917;
-  --color-muted: #6b6560;
-  --color-line: #e7e2db;
-  --color-navy: #1f2a44;
-  --color-navy-600: #2c3b5e;
-  --color-gold: #c08a2e;
-  --color-gold-50: #fbf4e6;
-  --color-ok: #2f7d4f;
-  --color-bad: #b42318;
+  --color-paper: var(--paper);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+  --color-ok: var(--ok);
+  --color-bad: var(--bad);
   --font-sans: var(--font-geist-sans);
-  --font-display: var(--font-fraunces);
+  --font-display: var(--font-geist-sans);
 }
 
 html {
   scroll-behavior: smooth;
+  color-scheme: light dark;
 }
 
 body {
-  background: var(--color-paper);
-  color: var(--color-ink);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+.font-display {
+  font-weight: 650;
+  letter-spacing: -0.025em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }
 
 @utility btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold whitespace-nowrap transition duration-200 ease-out active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100;
 }
 @utility btn-primary {
-  @apply btn bg-navy text-white hover:bg-navy-600;
-}
-@utility btn-gold {
-  @apply btn bg-gold text-white hover:brightness-110;
+  @apply btn bg-accent text-on-accent hover:bg-accent-strong;
 }
 @utility btn-ghost {
   @apply btn border border-line bg-card text-ink hover:border-ink/40;
 }
 @utility input {
-  @apply w-full rounded-lg border border-line bg-card px-3 py-2.5 text-sm outline-none focus:border-navy focus:ring-2 focus:ring-navy/15;
+  @apply w-full rounded-lg border border-line bg-card px-3 py-2.5 text-sm text-ink transition duration-200 outline-none placeholder:text-muted/80 focus:border-accent focus:ring-2 focus:ring-accent/20;
 }
 @utility label {
-  @apply mb-1 block text-sm font-medium text-ink;
+  @apply mb-1.5 block text-sm font-medium text-ink;
 }
 @utility card {
   @apply rounded-2xl border border-line bg-card;
 }
+
 .prose-simple h2 {
-  @apply mt-10 mb-3 font-display text-2xl font-semibold;
+  @apply mt-10 mb-3 text-2xl font-semibold tracking-tight;
 }
 .prose-simple h3 {
   @apply mt-6 mb-2 text-lg font-semibold;
 }
 .prose-simple p,
 .prose-simple li {
-  @apply leading-7 text-ink/85;
+  @apply max-w-[65ch] leading-7 text-ink/85;
 }
 .prose-simple p {
   @apply mb-4;
@@ -66,5 +131,5 @@ body {
   @apply mb-4 list-decimal pl-6;
 }
 .prose-simple a {
-  @apply text-navy underline;
+  @apply text-accent underline;
 }

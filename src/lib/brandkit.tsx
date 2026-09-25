@@ -44,7 +44,7 @@ export function getTemplate(id: string) {
 
 export interface RenderInput {
   template: TemplateDef;
-  photoUrl: string;
+  photoUrl?: string; // omitted → initials monogram (used for marketing demos)
   profile: AgentProfile;
   address?: string;
   price?: string;
@@ -59,6 +59,18 @@ function contrastText(hex: string): string {
   const n = parseInt(hex.slice(1), 16);
   const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
   return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6 ? "#111111" : "#ffffff";
+}
+
+function Avatar({ url, size, initials, color, border }: { url?: string; size: number; initials: string; color: string; border?: string }) {
+  if (url) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={url} width={size} height={size} style={{ borderRadius: size / 2, objectFit: "cover", ...(border ? { border } : {}) }} alt="" />;
+  }
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: size, height: size, borderRadius: size / 2, background: "#dfe4ee", color, fontSize: size * 0.34, fontWeight: 700, ...(border ? { border } : {}) }}>
+      {initials}
+    </div>
+  );
 }
 
 export async function renderBrandKit(input: RenderInput): Promise<ImageResponse> {
@@ -76,6 +88,7 @@ export async function renderBrandKit(input: RenderInput): Promise<ImageResponse>
   const details = clean(input.details, 80);
   const date = clean(input.date, 60);
   const contact = [phone, email, website].filter(Boolean).join("  •  ");
+  const initials = name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 
   const watermark = input.watermark ? (
     <div style={{ position: "absolute", bottom: 14, right: 20, fontSize: 20, color: "#00000099", display: "flex" }}>
@@ -89,8 +102,7 @@ export async function renderBrandKit(input: RenderInput): Promise<ImageResponse>
     body = (
       <div style={{ display: "flex", width: "100%", height: "100%", background: "#ffffff" }}>
         <div style={{ display: "flex", width: 420, height: "100%", background: color, alignItems: "center", justifyContent: "center" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={input.photoUrl} width={300} height={300} style={{ borderRadius: 150, objectFit: "cover", border: "8px solid #ffffff" }} alt="" />
+          <Avatar url={input.photoUrl} size={300} initials={initials} color={color} border="8px solid #ffffff" />
         </div>
         <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: 56, flex: 1 }}>
           <div style={{ fontSize: 56, fontWeight: 700, color: "#111" }}>{name}</div>
@@ -105,8 +117,7 @@ export async function renderBrandKit(input: RenderInput): Promise<ImageResponse>
   } else if (t.id === "email-signature") {
     body = (
       <div style={{ display: "flex", width: "100%", height: "100%", background: "#ffffff", alignItems: "center", padding: 30 }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={input.photoUrl} width={220} height={220} style={{ borderRadius: 110, objectFit: "cover" }} alt="" />
+        <Avatar url={input.photoUrl} size={220} initials={initials} color={color} />
         <div style={{ display: "flex", width: 6, height: 200, background: color, marginLeft: 36, marginRight: 36 }} />
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ fontSize: 48, fontWeight: 700, color: "#111" }}>{name}</div>
@@ -123,8 +134,7 @@ export async function renderBrandKit(input: RenderInput): Promise<ImageResponse>
           <div style={{ fontSize: 32, opacity: 0.9 }}>{`${title} • ${brokerage}`}</div>
           <div style={{ fontSize: 28, marginTop: 16, opacity: 0.85 }}>{contact || "Helping you find home"}</div>
         </div>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={input.photoUrl} width={300} height={300} style={{ borderRadius: 150, objectFit: "cover", border: `8px solid ${onColor}` }} alt="" />
+        <Avatar url={input.photoUrl} size={300} initials={initials} color={color} border={`8px solid ${onColor}`} />
       </div>
     );
   } else {
@@ -133,12 +143,11 @@ export async function renderBrandKit(input: RenderInput): Promise<ImageResponse>
     body = (
       <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", background: "#f7f5f2" }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: color, color: onColor, height: tall ? 520 : 400, paddingBottom: photoSize / 2 }}>
-          <div style={{ fontSize: tall ? 120 : 104, fontWeight: 800, letterSpacing: 6 }}>{t.headline}</div>
+          <div style={{ fontSize: (t.headline?.length ?? 0) > 12 ? (tall ? 96 : 84) : tall ? 120 : 104, fontWeight: 800, letterSpacing: 6 }}>{t.headline}</div>
           {t.id === "open-house" && date ? <div style={{ fontSize: 44, marginTop: 8 }}>{date}</div> : null}
         </div>
         <div style={{ display: "flex", justifyContent: "center", marginTop: -photoSize / 2 }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={input.photoUrl} width={photoSize} height={photoSize} style={{ borderRadius: photoSize / 2, objectFit: "cover", border: "10px solid #f7f5f2" }} alt="" />
+          <Avatar url={input.photoUrl} size={photoSize} initials={initials} color={color} border="10px solid #f7f5f2" />
         </div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "20px 60px", flex: 1 }}>
           <div style={{ fontSize: 46, fontWeight: 700, color: "#111", textAlign: "center" }}>{address}</div>

@@ -1,3 +1,4 @@
+import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -29,8 +30,8 @@ export default async function PostPage({ params }: PageProps<"/blog/[slug]">) {
   return (
     <article className="mx-auto max-w-2xl px-4 py-14">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
-      <Link href="/blog" className="text-sm text-muted">← All guides</Link>
-      <h1 className="mt-4 font-display text-4xl font-semibold leading-tight">{post.title}</h1>
+      <Link href="/blog" className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink"><ArrowLeft size={14} aria-hidden /> All guides</Link>
+      <h1 className="mt-4 font-display text-3xl md:text-4xl leading-tight">{post.title}</h1>
       <p className="mt-2 text-sm text-muted">{new Date(post.date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })} · {post.readMinutes} min read</p>
       <div className="prose-simple mt-8">{post.body()}</div>
     </article>

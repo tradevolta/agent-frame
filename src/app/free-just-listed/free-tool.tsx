@@ -40,7 +40,7 @@ export function FreeTool() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={url} alt="Your Just Listed graphic" className="mx-auto max-h-[520px] rounded-lg shadow-md" />
             <a href={url} download="just-listed.png" className="btn-primary mt-4">Download</a>
-            <p className="mt-4 text-sm text-muted">Want it without the watermark, with a studio headshot and 7 more templates? <Link href="/#pricing" className="font-medium text-navy underline">Get Agent Pro</Link></p>
+            <p className="mt-4 text-sm text-muted">Want it without the watermark, with a studio headshot and 7 more templates? <Link href="/#pricing" className="font-medium text-accent underline">Get Agent Pro</Link></p>
           </div>
         ) : (
           <p className="text-center text-muted">Your graphic will appear here.</p>

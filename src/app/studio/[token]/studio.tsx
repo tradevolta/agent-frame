@@ -45,8 +45,8 @@ export function Studio(props: Props) {
     <div className="mx-auto max-w-6xl px-4 py-10">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-gold">{props.plan.name}{props.isTeam ? " · Team seat" : ""}</p>
-          <h1 className="font-display text-4xl font-semibold">Your headshot studio</h1>
+          <p className="text-sm font-medium text-accent">{props.plan.name}{props.isTeam ? " · Team seat" : ""}</p>
+          <h1 className="font-display text-3xl md:text-4xl">Your headshot studio</h1>
         </div>
         <p className="max-w-sm text-xs text-muted">Bookmark this page. It&apos;s your private link, and we also emailed it to you.</p>
       </div>
@@ -78,7 +78,7 @@ export function Studio(props: Props) {
           {props.plan.brandKit ? (
             <div className="mb-6 inline-flex rounded-lg border border-line bg-card p-1 text-sm">
               {(["photos", "brand"] as const).map((t) => (
-                <button key={t} onClick={() => setTab(t)} className={`rounded-md px-4 py-2 font-medium ${tab === t ? "bg-navy text-white" : "text-muted"}`}>
+                <button key={t} onClick={() => setTab(t)} className={`rounded-md px-4 py-2 font-medium ${tab === t ? "bg-accent text-on-accent" : "text-muted"}`}>
                   {t === "photos" ? "Headshots" : "Brand Kit"}
                 </button>
               ))}
@@ -119,12 +119,12 @@ function Processing({ view }: { view: StatusView }) {
       <h2 className="text-xl font-semibold">{view.status === "training" ? "Learning your features…" : "Photographing you in each style…"}</h2>
       <p className="mt-2 text-muted">
         {view.status === "training"
-          ? "We're training your private AI model. This is the longest step (usually 20–40 minutes)."
+          ? "We're training your private AI model. This is the longest step (usually 20-40 minutes)."
           : `Generating your headshots${view.progress.total ? ` (${view.progress.done}/${view.progress.total} batches done)` : ""}.`}{" "}
         You can close this page. We&apos;ll email you when everything is ready.
       </p>
       <div className="mt-6 h-3 overflow-hidden rounded-full bg-line">
-        <div className="h-full rounded-full bg-gold transition-all duration-700" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-accent transition-all duration-700" style={{ width: `${pct}%` }} />
       </div>
       {view.photos.length > 0 ? (
         <div className="mt-6 grid grid-cols-4 gap-2 sm:grid-cols-6">

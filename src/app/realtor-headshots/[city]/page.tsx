@@ -33,7 +33,7 @@ export default async function CityPage({ params }: PageProps<"/realtor-headshots
     <>
       <section className="mx-auto max-w-6xl px-4 pb-8 pt-14">
         <nav className="text-xs text-muted"><Link href="/realtor-headshots">Headshots by city</Link> / {city.name}</nav>
-        <h1 className="mt-3 max-w-3xl font-display text-5xl font-semibold leading-tight">Realtor headshots for {city.name}, {city.stateCode} agents</h1>
+        <h1 className="mt-3 max-w-3xl font-display text-4xl md:text-5xl leading-tight">Realtor headshots for {city.name}, {city.stateCode} agents</h1>
         <p className="mt-4 max-w-2xl text-lg text-muted">{city.blurb}</p>
         <p className="mt-2 max-w-2xl text-muted">Skip the studio booking. Upload a few selfies and get realistic headshots plus ready-to-post listing graphics in about an hour, from {formatUsd(PLANS.starter.priceCents)}.</p>
         <div className="mt-6 flex gap-3">
@@ -42,7 +42,7 @@ export default async function CityPage({ params }: PageProps<"/realtor-headshots
         </div>
       </section>
       <section className="mx-auto max-w-6xl px-4 py-8">
-        <h2 className="font-display text-2xl font-semibold">Popular styles with {city.name} agents</h2>
+        <h2 className="font-display text-2xl">Popular styles with {city.name} agents</h2>
         <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
           {styles.map((s) => <StyleCard key={s.id} style={s} />)}
         </div>
@@ -54,7 +54,7 @@ export default async function CityPage({ params }: PageProps<"/realtor-headshots
           Also serving agents in{" "}
           {nearby.map((c, i) => (
             <span key={c!.slug}>
-              <Link href={`/realtor-headshots/${c!.slug}`} className="text-navy underline">{c!.name}</Link>
+              <Link href={`/realtor-headshots/${c!.slug}`} className="text-accent underline">{c!.name}</Link>
               {i < nearby.length - 1 ? ", " : "."}
             </span>
           ))}

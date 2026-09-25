@@ -90,7 +90,7 @@ export const STYLES: HeadshotStyle[] = [
   {
     id: "coastal",
     name: "Coastal",
-    description: "Beach-house deck — great for coastal markets.",
+    description: "Beach-house deck, great for coastal markets.",
     scene: "on the deck of a coastal beach house, ocean and dunes softly blurred, bright airy light",
     attire: { formal: "wearing a light linen blazer", business_casual: "wearing a light linen shirt" },
   },

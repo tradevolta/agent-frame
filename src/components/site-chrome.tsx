@@ -1,15 +1,13 @@
 import Link from "next/link";
+import { FrameCorners } from "@phosphor-icons/react/dist/ssr";
 import { brand } from "@/lib/brand";
+import { NavLinks } from "./nav-links";
 
 export function Logo() {
   return (
     <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-      <span className="grid h-8 w-8 place-items-center rounded-lg bg-navy text-sm text-white">
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
-          <path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3" />
-          <circle cx="12" cy="10" r="2.5" />
-          <path d="M7.5 17c.8-2 2.5-3 4.5-3s3.7 1 4.5 3" />
-        </svg>
+      <span className="grid h-8 w-8 place-items-center rounded-lg bg-accent text-on-accent">
+        <FrameCorners size={18} weight="bold" aria-hidden />
       </span>
       <span className="text-lg">{brand.name}</span>
     </Link>
@@ -21,14 +19,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-30 border-b border-line/70 bg-paper/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <Logo />
-        <nav className="hidden items-center gap-6 text-sm text-muted md:flex">
-          <Link href="/#styles" className="hover:text-ink">Styles</Link>
-          <Link href="/#brand-kit" className="hover:text-ink">Brand Kit</Link>
-          <Link href="/#pricing" className="hover:text-ink">Pricing</Link>
-          <Link href="/teams" className="hover:text-ink">Teams</Link>
-          <Link href="/free-just-listed" className="hover:text-ink">Free tool</Link>
-          <Link href="/blog" className="hover:text-ink">Guides</Link>
-        </nav>
+        <NavLinks />
         <Link href="/#pricing" className="btn-primary !py-2">Get headshots</Link>
       </div>
     </header>

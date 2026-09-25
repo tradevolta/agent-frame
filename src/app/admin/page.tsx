@@ -30,7 +30,7 @@ export default async function Admin() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
-      <h1 className="font-display text-3xl font-semibold">Admin</h1>
+      <h1 className="font-display text-3xl">Admin</h1>
       <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-6">
         <Stat label="Paid orders" value={String(totals.paid)} />
         <Stat label="Last 7 days" value={String(totals.last7)} />
@@ -49,13 +49,13 @@ export default async function Admin() {
             {recent.map((o) => (
               <tr key={o.id}>
                 <td className="p-2 whitespace-nowrap">{o.createdAt.toLocaleString()}</td>
-                <td className="p-2">{o.email ?? "—"}</td>
+                <td className="p-2">{o.email ?? "-"}</td>
                 <td className="p-2">{o.plan}{o.teamId ? " (team)" : ""}{o.subscriptionId ? " (sub)" : ""}</td>
                 <td className="p-2"><span className={o.status === "failed" ? "font-semibold text-bad" : ""}>{o.status}</span>{o.error ? <div className="max-w-xs truncate text-xs text-muted" title={o.error}>{o.error}</div> : null}</td>
                 <td className="p-2">{formatUsd(o.amountCents)}</td>
                 <td className="p-2">{formatUsd(o.estCostCents)}</td>
                 <td className="p-2 text-xs">{o.referredBy ?? ""}{o.referralCount ? ` → ${o.referralCount} refs` : ""}</td>
-                <td className="p-2"><a className="text-navy underline" href={`/studio/${o.token}`} target="_blank">open</a></td>
+                <td className="p-2"><a className="text-accent underline" href={`/studio/${o.token}`} target="_blank">open</a></td>
                 <td className="p-2">{o.status === "failed" ? <RetryButton orderId={o.id} /> : null}</td>
               </tr>
             ))}
@@ -70,7 +70,7 @@ export default async function Admin() {
             {teamRows.length === 0 ? <p className="p-3 text-muted">None yet.</p> : teamRows.map((t) => (
               <div key={t.id} className="flex justify-between p-3">
                 <span>{t.name} <span className="text-muted">({t.managerEmail})</span></span>
-                <span>{t.seatsUsed}/{t.seats} · {t.status} · <a className="text-navy underline" href={`/team/${t.token}`} target="_blank">dashboard</a></span>
+                <span>{t.seatsUsed}/{t.seats} · {t.status} · <a className="text-accent underline" href={`/team/${t.token}`} target="_blank">dashboard</a></span>
               </div>
             ))}
           </div>
@@ -78,7 +78,7 @@ export default async function Admin() {
         <div>
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Leads</h2>
-            <a href="/api/admin/leads" className="text-sm text-navy underline">Export CSV</a>
+            <a href="/api/admin/leads" className="text-sm text-accent underline">Export CSV</a>
           </div>
           <div className="card mt-3 divide-y divide-line text-sm">
             {leadRows.length === 0 ? <p className="p-3 text-muted">None yet.</p> : leadRows.map((l) => (

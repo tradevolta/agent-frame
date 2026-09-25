@@ -24,7 +24,7 @@ export const POSTS: Post[] = [
   {
     slug: "realtor-headshot-tips",
     title: "Realtor Headshot Tips: 12 Rules for a Photo That Gets Calls",
-    description: "What makes a real estate agent headshot work on Zillow, MLS and yard signs — framing, wardrobe, background, expression and how often to update.",
+    description: "What makes a real estate agent headshot work on Zillow, MLS and yard signs: framing, wardrobe, background, expression and how often to update.",
     date: "2026-09-20",
     readMinutes: 6,
     body: () => (
@@ -68,7 +68,7 @@ export const POSTS: Post[] = [
       <>
         <p>AI headshots went from novelty to normal in a few years. Are they right for a real estate agent, whose face is their brand? Here&apos;s an honest breakdown.</p>
         <h2>Cost</h2>
-        <p>A professional headshot session usually costs a few hundred dollars once you add styling, extra looks and retouching. An AI headshot package typically costs $29–$49 and includes dozens of looks.</p>
+        <p>A professional headshot session usually costs a few hundred dollars once you add styling, extra looks and retouching. An AI headshot package typically costs $29-$49 and includes dozens of looks.</p>
         <h2>Time</h2>
         <p>A photographer means scheduling, travel, the shoot and a wait for edits, often one to two weeks in total. AI takes about 10 minutes of selfies and roughly an hour of processing.</p>
         <h2>Variety</h2>
@@ -119,7 +119,7 @@ export const POSTS: Post[] = [
     body: () => (
       <>
         <p>Your AI headshots can only be as good as the photos you upload. Ten minutes of prep makes a big difference.</p>
-        <h2>Upload 10–20 recent photos</h2>
+        <h2>Upload 10-20 recent photos</h2>
         <ul>
           <li>Only you in the frame, with no group shots or other faces</li>
           <li>Taken in the last few months, with your current hair and look</li>
@@ -155,7 +155,7 @@ export const POSTS: Post[] = [
     body: () => (
       <>
         <p>Consistency beats creativity on social media. Here are 30 post ideas you can rotate. Most work with the Just Listed, Open House, Sold and Coming Soon templates in your Brand Kit.</p>
-        <h2>Listings & results (1–8)</h2>
+        <h2>Listings & results (1-8)</h2>
         <ol>
           <li>Just Listed with price and highlights</li>
           <li>Coming Soon teaser</li>
@@ -166,7 +166,7 @@ export const POSTS: Post[] = [
           <li>A client testimonial (with permission)</li>
           <li>Behind the scenes of a listing photo shoot</li>
         </ol>
-        <h2>Local expertise (9–16)</h2>
+        <h2>Local expertise (9-16)</h2>
         <ol start={9}>
           <li>Favorite coffee shop in your farm area</li>
           <li>New restaurant opening</li>
@@ -177,7 +177,7 @@ export const POSTS: Post[] = [
           <li>New construction update</li>
           <li>Commute tips</li>
         </ol>
-        <h2>Education (17–24)</h2>
+        <h2>Education (17-24)</h2>
         <ol start={17}>
           <li>What earnest money is</li>
           <li>Inspection vs. appraisal</li>
@@ -188,7 +188,7 @@ export const POSTS: Post[] = [
           <li>Closing-cost basics</li>
           <li>Myth vs. fact Monday</li>
         </ol>
-        <h2>Personal brand (25–30)</h2>
+        <h2>Personal brand (25-30)</h2>
         <ol start={25}>
           <li>Why you became an agent</li>
           <li>A day in your life</li>
