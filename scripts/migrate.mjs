@@ -3,7 +3,12 @@
 // schema changes, falling back to the pooled POSTGRES_URL if it can't connect
 // (some direct hosts are IPv6-only). Neon: DATABASE_URL. Skipped when no
 // database is configured (local dev uses auto-migrated PGlite).
-const candidates = [process.env.POSTGRES_URL_NON_POOLING, process.env.DATABASE_URL, process.env.POSTGRES_URL].filter(Boolean);
+// Same priority as the app (src/lib/db/url.ts): DATABASE_URL wins if set.
+const candidates = (
+  process.env.DATABASE_URL
+    ? [process.env.DATABASE_URL]
+    : [process.env.POSTGRES_URL_NON_POOLING, process.env.POSTGRES_URL]
+).filter(Boolean);
 
 async function migrateWith(url) {
   if (/\.neon\.tech\b/.test(url)) {
