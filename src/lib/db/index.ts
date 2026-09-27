@@ -4,7 +4,7 @@ import * as schema from "./schema";
 import { ConfigError } from "../config-error";
 import { cleanPgUrl, databaseUrl, isNeon } from "./url";
 
-// Production: Supabase (POSTGRES_URL, via postgres.js through its pooler) or
+// Production: Supabase (POSTGRES_URL, via node-postgres through its pooler) or
 // Neon (DATABASE_URL, via its HTTP driver). Local dev / tests: embedded PGlite,
 // auto-migrated, so no Postgres install is needed.
 export type DB = PgDatabase<PgQueryResultHKT, typeof schema>;
@@ -44,10 +44,15 @@ export const dbDiagnostics: { host?: string; error?: string } = {};
  * Supabase gives a pooled URL (POSTGRES_URL) and a direct/session one
  * (POSTGRES_URL_NON_POOLING). Use the pooled one, but verify it answers
  * quickly and fall back to the other if it doesn't.
+ *
+ * node-postgres + attachDatabasePool: Vercel suspends functions between
+ * requests, and a pooled socket can die while suspended. The next query on it
+ * would hang. attachDatabasePool closes idle clients before suspension, and the
+ * timeouts below turn any remaining hang into an error instead of a stuck page.
  */
 async function connectPostgres(primary: string): Promise<DB> {
-  const { default: postgres } = await import("postgres");
-  const { drizzle } = await import("drizzle-orm/postgres-js");
+  const { Pool } = await import("pg");
+  const { drizzle } = await import("drizzle-orm/node-postgres");
   const candidates = [primary, process.env.POSTGRES_URL_NON_POOLING].filter(
     (u, i, all): u is string => !!u && all.indexOf(u) === i,
   );
@@ -55,17 +60,29 @@ async function connectPostgres(primary: string): Promise<DB> {
   for (const candidate of candidates) {
     const { url: clean, ssl } = cleanPgUrl(candidate);
     const host = new URL(clean).host;
-    // prepare:false is required behind transaction-mode poolers (Supabase :6543).
-    const client = postgres(clean, { ssl, prepare: false, max: 3, idle_timeout: 20, connect_timeout: 8 });
+    const pool = new Pool({
+      connectionString: clean,
+      // Supabase's pooler certificate isn't publicly trusted; same as sslmode=require.
+      ssl: ssl ? { rejectUnauthorized: false } : false,
+      max: 5,
+      idleTimeoutMillis: 5_000,
+      connectionTimeoutMillis: 8_000,
+      query_timeout: 20_000,
+    });
+    pool.on("error", (err) => console.error("[db] idle client error", err)); // don't crash on a dropped idle socket
     try {
-      await client`select 1`;
+      await pool.query("select 1");
+      if (process.env.VERCEL) {
+        const { attachDatabasePool } = await import("@vercel/functions");
+        attachDatabasePool(pool);
+      }
       dbDiagnostics.host = host;
       dbDiagnostics.error = errors.length ? errors.join(" | ") : undefined;
-      return drizzle(client, { schema }) as unknown as DB;
+      return drizzle(pool, { schema }) as unknown as DB;
     } catch (err) {
       errors.push(`${host}: ${String((err as Error)?.message ?? err).slice(0, 200)}`);
       console.error("[db] connection failed", host, err);
-      await client.end({ timeout: 1 }).catch(() => {});
+      await pool.end().catch(() => {});
     }
   }
   dbDiagnostics.error = errors.join(" | ");
