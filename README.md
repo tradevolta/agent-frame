@@ -92,12 +92,12 @@ src/lib/styles.ts       the 12 realtor styles and prompt builder
 src/lib/brandkit.tsx    Brand Kit graphic templates (next/og)
 src/lib/accounts.ts     team seats + Always Fresh subscription shoots
 src/app/studio/[token]  customer studio (upload, progress, gallery, redo, brand kit)
-src/app/admin           revenue, costs, orders, retries, leads CSV (basic auth)
+src/app/admin           revenue, costs, orders, retries, leads CSV (password login)
 src/content/            SEO city pages + guide articles
 ```
 
 Access model: customers don't have passwords. Each studio, team dashboard and account
-page is a long random capability URL that we email to them. Admin is behind HTTP basic auth.
+page is a long random capability URL that we email to them. Admin uses a password login page (ADMIN_PASSWORD) with a signed, HttpOnly session cookie; Basic auth also works for scripts.
 
 ## Before you launch
 

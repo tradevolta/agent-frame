@@ -5,6 +5,7 @@ import { leads, orders, subscriptions, teams } from "@/lib/db/schema";
 import { formatUsd } from "@/lib/plans";
 import { RetryButton } from "./retry-button";
 import { SamplesButton } from "./samples-button";
+import { LogoutButton } from "./logout-button";
 import { getSampleUrls } from "@/lib/samples";
 import { STYLES } from "@/lib/styles";
 import { healthChecks } from "@/lib/health";
@@ -19,7 +20,10 @@ export default async function Admin() {
   const dbReady = checks[0].ok;
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
-      <h1 className="font-display text-3xl">Admin</h1>
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="font-display text-3xl">Admin</h1>
+        <LogoutButton />
+      </div>
       <section className="card mt-6 p-5" aria-label="Setup checklist">
         <h2 className="font-semibold">{pending.length ? `Setup: ${pending.length} item${pending.length === 1 ? "" : "s"} left before you can take orders` : "Setup complete"}</h2>
         <ul className="mt-3 divide-y divide-line text-sm">
