@@ -68,15 +68,53 @@ async function generateOne(styleId: string): Promise<string> {
   return stored.url;
 }
 
-/** Generate (or regenerate) samples. Returns per-style results. */
-export async function generateSamples(styleIds: string[] = STYLES.map((s) => s.id)) {
+const CONCURRENCY = 3;
+
+/** One retry for transient refusals (fal can briefly refuse right after a top-up or under load). */
+async function generateWithRetry(styleId: string): Promise<string> {
+  try {
+    return await generateOne(styleId);
+  } catch (err) {
+    const status = (err as { status?: number })?.status;
+    if (status && [403, 429, 500, 502, 503, 504].includes(status)) {
+      await new Promise((r) => setTimeout(r, 4000));
+      return generateOne(styleId);
+    }
+    throw err;
+  }
+}
+
+/**
+ * Generate sample photos. mode "missing" (default) only creates styles without
+ * a sample, so a retry never pays twice; "all" regenerates every style.
+ * Runs at most CONCURRENCY requests at a time.
+ */
+export async function generateSamples(opts: { mode?: "missing" | "all"; styles?: string[] } = {}) {
   if (isMockAi()) throw new UserError("Set FAL_KEY in Vercel first. Sample photos are generated with fal.ai.");
   // Check storage before spending money on generation.
   await getDb(); // throws ConfigError if the database isn't connected
   if (process.env.VERCEL && !env.blobToken) throw new ConfigError("storage", "BLOB_READ_WRITE_TOKEN is not set. Add Blob storage in Vercel.");
-  const results = await Promise.allSettled(styleIds.map((id) => generateOne(id)));
-  return styleIds.map((id, i) => {
-    const r = results[i];
-    return r.status === "fulfilled" ? { style: id, ok: true } : { style: id, ok: false, error: describeFalError(r.reason) };
-  });
+
+  let styleIds = opts.styles?.length ? opts.styles.filter((id) => getStyle(id)) : STYLES.map((s) => s.id);
+  if ((opts.mode ?? "missing") === "missing") {
+    const have = await getSampleUrls();
+    styleIds = styleIds.filter((id) => !have[id]);
+  }
+
+  const results: { style: string; ok: boolean; error?: string }[] = [];
+  const queue = [...styleIds];
+  await Promise.all(
+    Array.from({ length: Math.min(CONCURRENCY, queue.length) }, async () => {
+      while (queue.length) {
+        const id = queue.shift()!;
+        try {
+          await generateWithRetry(id);
+          results.push({ style: id, ok: true });
+        } catch (err) {
+          results.push({ style: id, ok: false, error: describeFalError(err) });
+        }
+      }
+    }),
+  );
+  return results;
 }

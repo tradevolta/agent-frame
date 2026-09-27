@@ -10,11 +10,12 @@ export function SamplesButton({ have, total }: { have: number; total: number }) 
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  async function run() {
+  async function run(mode: "missing" | "all") {
+    if (mode === "all" && !window.confirm("Replace all sample photos? This generates every style again (about $0.06 each).")) return;
     setBusy(true);
     setError(null);
     setResults(null);
-    const res = await fetch("/api/admin/samples", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+    const res = await fetch("/api/admin/samples", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode }) });
     const data = await res.json().catch(() => ({}));
     if (res.ok) setResults(data.results);
     else setError(data.error ?? "Generation failed");
@@ -28,11 +29,20 @@ export function SamplesButton({ have, total }: { have: number; total: number }) 
       <h2 className="font-semibold">Style sample photos</h2>
       <p className="mt-1 text-sm text-muted">
         {have}/{total} styles have a sample. Generates one AI photo of a fictional agent per style with fal.ai
-        (about $0.06 each, 1-2 minutes). Running it again replaces them.
+        (about $0.06 each, 1-3 minutes). Only missing styles are generated unless you choose Regenerate all.
       </p>
-      <button className="btn-primary mt-4" onClick={run} disabled={busy}>
-        {busy ? "Generating, keep this tab open…" : have ? "Regenerate sample photos" : "Generate sample photos"}
-      </button>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {have < total ? (
+          <button className="btn-primary" onClick={() => run("missing")} disabled={busy}>
+            {busy ? "Generating, keep this tab open…" : have ? `Generate the ${total - have} missing` : "Generate sample photos"}
+          </button>
+        ) : null}
+        {have > 0 ? (
+          <button className={have < total ? "btn-ghost" : "btn-primary"} onClick={() => run("all")} disabled={busy}>
+            {busy && have >= total ? "Generating, keep this tab open…" : "Regenerate all"}
+          </button>
+        ) : null}
+      </div>
       {error ? <p className="mt-3 text-sm text-bad">{error}</p> : null}
       {results ? (
         <p className="mt-3 text-sm">
