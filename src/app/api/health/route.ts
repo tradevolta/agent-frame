@@ -1,4 +1,4 @@
-import { healthChecks } from "@/lib/health";
+import { healthChecks, regionInfo } from "@/lib/health";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -19,8 +19,9 @@ export async function GET() {
       {
         ok: checks.every((c) => c.ok),
         ms: Date.now() - started,
-        checks: checks.map((c) => ({ name: c.name, ok: c.ok, detail: c.ok ? "ok" : mask(c.detail) })),
+        checks: checks.map((c) => ({ name: c.name, ok: c.ok, detail: c.ok ? (c.name === "Database" ? mask(c.detail) : "ok") : mask(c.detail) })),
         adminPasswordSet: !!process.env.ADMIN_PASSWORD,
+        regions: regionInfo(),
       },
       { headers: { "Cache-Control": "no-store" } },
     );

@@ -12,20 +12,50 @@ export interface Check {
   fix?: string;
 }
 
+// Supabase pooler hosts carry their AWS region (aws-0-us-east-1.pooler.supabase.com).
+// Matching Vercel function regions, so the app can run next to its database.
+const VERCEL_REGION_FOR: Record<string, string> = {
+  "us-east-1": "iad1", "us-east-2": "cle1", "us-west-1": "sfo1", "us-west-2": "pdx1", "ca-central-1": "yul1",
+  "sa-east-1": "gru1", "eu-west-1": "dub1", "eu-west-2": "lhr1", "eu-west-3": "cdg1", "eu-central-1": "fra1",
+  "eu-north-1": "arn1", "ap-south-1": "bom1", "ap-southeast-1": "sin1", "ap-southeast-2": "syd1",
+  "ap-northeast-1": "hnd1", "ap-northeast-2": "icn1",
+};
+
+/** Database and function regions, e.g. ", database us-west-1 / app iad1 (move the app to sfo1…)". */
+export function regionInfo(): { db?: string; app?: string; suggested?: string } {
+  const db = dbDiagnostics.host?.match(/aws-\d+-([a-z]+-[a-z]+-\d+)\.pooler/)?.[1];
+  const app = process.env.VERCEL_REGION;
+  const suggested = db ? VERCEL_REGION_FOR[db] : undefined;
+  return { db, app, suggested };
+}
+
+function regionNote(): string {
+  const { db, app, suggested } = regionInfo();
+  if (!db || !app) return "";
+  if (!suggested || suggested === app) return ` (database ${db}, app ${app})`;
+  return (
+    ` (database ${db}, app ${app}: every query crosses regions. ` +
+    `Vercel → Settings → Functions → Function Region → ${suggested}, then redeploy)`
+  );
+}
+
 /** What's configured in this deployment. Powers the setup checklist on /admin. */
 export async function healthChecks(): Promise<Check[]> {
   let dbOk = false;
   let dbDetail = "Not set";
+  let dbMs: number | undefined;
   if (databaseUrl() || !process.env.VERCEL) {
     try {
       const db = await getDb();
+      const t0 = Date.now();
       await Promise.race([
         db.execute(sql`select 1`),
         new Promise((_, reject) => setTimeout(() => reject(new Error("query timed out after 10s")), 10_000)),
       ]);
+      dbMs = Date.now() - t0;
       dbOk = true;
       dbDetail = databaseUrl()
-        ? `Connected${dbDiagnostics.host ? ` via ${dbDiagnostics.host}` : ""}${dbDiagnostics.error ? ` (fallback used; first attempt: ${dbDiagnostics.error})` : ""}`
+        ? `Connected${dbDiagnostics.host ? ` via ${dbDiagnostics.host}` : ""}, ${dbMs} ms per query${regionNote()}${dbDiagnostics.error ? ` (fallback used; first attempt: ${dbDiagnostics.error})` : ""}`
         : "Local dev database";
     } catch (e) {
       dbDetail = `Error: ${String((e as Error)?.message ?? e).slice(0, 400)}`;

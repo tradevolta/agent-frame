@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { desc, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { leads, orders, subscriptions, teams } from "@/lib/db/schema";
@@ -14,16 +15,36 @@ export const metadata: Metadata = { title: "Admin", robots: { index: false } };
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-export default async function Admin() {
-  const checks = await healthChecks();
-  const pending = checks.filter((c) => !c.ok);
-  const dbReady = checks[0].ok;
+// The header renders at once; the checklist and the dashboard stream in as
+// their database queries finish, so a slow query never blanks the whole page.
+export default function Admin() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
       <div className="flex items-center justify-between gap-4">
         <h1 className="font-display text-3xl">Admin</h1>
         <LogoutButton />
       </div>
+      <Suspense fallback={<Skeleton label="Checking services…" />}>
+        <SetupAndDashboard />
+      </Suspense>
+    </div>
+  );
+}
+
+function Skeleton({ label }: { label: string }) {
+  return (
+    <div className="card mt-6 animate-pulse p-5 text-sm text-muted" role="status">
+      {label}
+    </div>
+  );
+}
+
+async function SetupAndDashboard() {
+  const checks = await healthChecks();
+  const pending = checks.filter((c) => !c.ok);
+  const dbReady = checks[0].ok;
+  return (
+    <>
       <section className="card mt-6 p-5" aria-label="Setup checklist">
         <h2 className="font-semibold">{pending.length ? `Setup: ${pending.length} item${pending.length === 1 ? "" : "s"} left before you can take orders` : "Setup complete"}</h2>
         <ul className="mt-3 divide-y divide-line text-sm">
@@ -38,8 +59,14 @@ export default async function Admin() {
           ))}
         </ul>
       </section>
-      {dbReady ? <SafeDashboard /> : <p className="mt-6 text-sm text-muted">Orders, teams, leads and sample photos appear here once the database is connected.</p>}
-    </div>
+      {dbReady ? (
+        <Suspense fallback={<Skeleton label="Loading orders, teams and leads…" />}>
+          <SafeDashboard />
+        </Suspense>
+      ) : (
+        <p className="mt-6 text-sm text-muted">Orders, teams, leads and sample photos appear here once the database is connected.</p>
+      )}
+    </>
   );
 }
 
@@ -58,7 +85,7 @@ async function SafeDashboard() {
 
 async function Dashboard() {
   const db = await getDb();
-  const [[totals], recent, teamRows, leadRows, [subCount]] = await Promise.all([
+  const [[totals], recent, teamRows, leadRows, [subCount], samples] = await Promise.all([
     db
       .select({
         paid: sql<number>`count(*) filter (where ${orders.status} not in ('pending_payment','refunded'))::int`,
@@ -73,8 +100,8 @@ async function Dashboard() {
     db.select().from(teams).orderBy(desc(teams.createdAt)).limit(50),
     db.select().from(leads).orderBy(desc(leads.createdAt)).limit(50),
     db.select({ n: sql<number>`count(*) filter (where ${subscriptions.status} = 'active')::int` }).from(subscriptions),
+    getSampleUrls(),
   ]);
-  const samples = await getSampleUrls();
   const teamRevenue = teamRows.filter((t) => t.status === "active").reduce((s, t) => s + t.amountCents, 0);
 
   return (
