@@ -91,3 +91,16 @@ describe("fal webhook parsing", () => {
     expect(parseFalWebhook({})).toBeNull();
   });
 });
+
+describe("email helpers", async () => {
+  const { parseAddress, zeptoAuthHeader } = await import("@/lib/email");
+  it("parses display-name addresses", () => {
+    expect(parseAddress("AgentFrame <studio@realagentframe.com>")).toEqual({ name: "AgentFrame", address: "studio@realagentframe.com" });
+    expect(parseAddress('"Agent Frame" <a@b.co>')).toEqual({ name: "Agent Frame", address: "a@b.co" });
+    expect(parseAddress("plain@b.co")).toEqual({ address: "plain@b.co" });
+  });
+  it("adds the ZeptoMail auth prefix once", () => {
+    expect(zeptoAuthHeader("abc")).toBe("Zoho-enczapikey abc");
+    expect(zeptoAuthHeader("Zoho-enczapikey abc")).toBe("Zoho-enczapikey abc");
+  });
+});

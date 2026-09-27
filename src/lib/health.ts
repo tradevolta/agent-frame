@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import { getDb } from "./db";
 import { env } from "./env";
 import { databaseUrl } from "./db/url";
+import { emailProvider } from "./email";
 
 export interface Check {
   name: string;
@@ -36,7 +37,17 @@ export async function healthChecks(): Promise<Check[]> {
     },
     { name: "AI (fal.ai)", ok: !!env.falKey, detail: env.falKey ? "Configured" : "FAL_KEY missing (mock AI)", fix: "Add FAL_KEY." },
     { name: "File storage (Blob)", ok: !!env.blobToken || !process.env.VERCEL, detail: env.blobToken ? "Configured" : "Local disk (dev only)", fix: "Vercel → Storage → Blob." },
-    { name: "Email (Zoho SMTP)", ok: !!env.smtpUser && !!env.smtpPass, detail: env.smtpUser ? `Sending as ${env.smtpUser}` : "Not set: emails are only logged", fix: "Add SMTP_USER, SMTP_PASS, EMAIL_FROM." },
+    {
+      name: "Email",
+      ok: emailProvider() !== "none" && !!process.env.EMAIL_FROM,
+      detail:
+        emailProvider() === "none"
+          ? "Not set: emails are only logged"
+          : !process.env.EMAIL_FROM
+            ? `${emailProvider() === "zeptomail" ? "ZeptoMail" : "SMTP"} set, but EMAIL_FROM is missing`
+            : `${emailProvider() === "zeptomail" ? "ZeptoMail" : "Zoho SMTP"}, sending as ${env.emailFrom}`,
+      fix: "Add ZEPTOMAIL_TOKEN and EMAIL_FROM (a sender on your verified ZeptoMail domain).",
+    },
     {
       name: "Public domain",
       ok: !!process.env.NEXT_PUBLIC_APP_URL,

@@ -23,17 +23,58 @@ function getTransport(): Promise<Transport> {
   return transport;
 }
 
+/** "AgentFrame <studio@x.com>" → { name, address } */
+export function parseAddress(value: string): { name?: string; address: string } {
+  const m = value.match(/^\s*"?([^"<]*?)"?\s*<([^>]+)>\s*$/);
+  return m ? { name: m[1].trim() || undefined, address: m[2].trim() } : { address: value.trim() };
+}
+
+/** ZeptoMail's API wants `Zoho-enczapikey <token>`; accept the token with or without the prefix. */
+export function zeptoAuthHeader(token: string): string {
+  return token.startsWith("Zoho-enczapikey ") ? token : `Zoho-enczapikey ${token}`;
+}
+
+async function sendViaZepto(mail: Mail): Promise<void> {
+  const from = parseAddress(env.emailFrom);
+  const res = await fetch(env.zeptoApiUrl, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      Authorization: zeptoAuthHeader(env.zeptoToken!),
+    },
+    body: JSON.stringify({
+      from: { address: from.address, name: from.name ?? brand.name },
+      to: [{ email_address: { address: mail.to } }],
+      reply_to: [{ address: brand.supportEmail, name: brand.name }],
+      subject: mail.subject,
+      htmlbody: mail.html,
+    }),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`ZeptoMail ${res.status}: ${detail.slice(0, 300)}`);
+  }
+}
+
+export function emailProvider(): "zeptomail" | "smtp" | "none" {
+  if (env.zeptoToken) return "zeptomail";
+  if (env.smtpUser && env.smtpPass) return "smtp";
+  return "none";
+}
+
 export async function sendEmail(mail: Mail): Promise<void> {
-  if (!env.smtpUser || !env.smtpPass) {
+  const provider = emailProvider();
+  if (provider === "none") {
     console.info(`[email:mock] to=${mail.to} subject="${mail.subject}"`);
     return;
   }
   try {
-    const t = await getTransport();
-    await t.sendMail({ from: env.emailFrom, replyTo: brand.supportEmail, ...mail });
+    if (provider === "zeptomail") await sendViaZepto(mail);
+    else await (await getTransport()).sendMail({ from: env.emailFrom, replyTo: brand.supportEmail, ...mail });
   } catch (err) {
     // Email must never break checkout or generation.
-    console.error("[email] send failed", err);
+    console.error(`[email] ${provider} send failed`, err);
   }
 }
 

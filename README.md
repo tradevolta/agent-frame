@@ -22,7 +22,7 @@ See [`docs/MARKETING.md`](docs/MARKETING.md) for domain ideas and the go-to-mark
 | Payments | Stripe Checkout + webhooks | Fake checkout at `/api/mock-checkout` |
 | AI | fal.ai: FLUX LoRA portrait trainer + FLUX LoRA generation | Echoes your uploads back as "results" |
 | Storage | Vercel Blob | Local disk served by `/api/files` |
-| Email | Zoho Mail (SMTP via nodemailer) | Logged to the console |
+| Email | ZeptoMail API (or Zoho Mail SMTP) | Logged to the console |
 | Graphics | `next/og` (Satori) rendered on demand | same |
 
 Everything is stateless and serverless, so it scales horizontally on Vercel. The AI work

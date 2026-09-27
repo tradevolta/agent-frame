@@ -10,7 +10,12 @@ export const env = {
   falTrainer: process.env.FAL_TRAINER_MODEL || "fal-ai/flux-lora-portrait-trainer",
   falTrainingSteps: Number(process.env.FAL_TRAINING_STEPS || 2000),
   blobToken: process.env.BLOB_READ_WRITE_TOKEN,
-  // Zoho Mail SMTP. Custom-domain (organization) accounts use smtppro.zoho.com;
+  // ZeptoMail (Zoho's transactional email API): preferred when a token is set.
+  // Use the "Send Mail token" from ZeptoMail → Mail Agents → SMTP/API.
+  zeptoToken: process.env.ZEPTOMAIL_TOKEN,
+  // Region-specific API host, e.g. https://api.zeptomail.eu/v1.1/email for EU accounts.
+  zeptoApiUrl: process.env.ZEPTOMAIL_API_URL || "https://api.zeptomail.com/v1.1/email",
+  // Zoho Mail SMTP (fallback). Custom-domain (organization) accounts use smtppro.zoho.com;
   // free personal accounts use smtp.zoho.com; EU/India data centers use .eu / .in.
   smtpHost: process.env.SMTP_HOST || "smtppro.zoho.com",
   smtpPort: Number(process.env.SMTP_PORT || 465),
