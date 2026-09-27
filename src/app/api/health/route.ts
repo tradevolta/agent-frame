@@ -19,7 +19,7 @@ export async function GET() {
       {
         ok: checks.every((c) => c.ok),
         ms: Date.now() - started,
-        checks: checks.map((c) => ({ name: c.name, ok: c.ok, detail: c.ok ? (c.name === "Database" ? mask(c.detail) : "ok") : mask(c.detail) })),
+        checks: checks.map((c) => ({ name: c.name, ok: c.ok, detail: c.ok ? (c.name === "Database" || c.name.startsWith("Payments") ? mask(c.detail) : "ok") : mask(c.detail) })),
         adminPasswordSet: !!process.env.ADMIN_PASSWORD,
         regions: regionInfo(),
       },

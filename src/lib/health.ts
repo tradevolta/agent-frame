@@ -39,6 +39,11 @@ function regionNote(): string {
   );
 }
 
+/** "live" or "test", from the secret key's prefix (sk_live_ / rk_live_ vs sk_test_ / rk_test_). */
+function stripeMode(): string {
+  return /^(sk|rk)_live_/.test(env.stripeSecret ?? "") ? "live" : /^(sk|rk)_test_/.test(env.stripeSecret ?? "") ? "test" : "unknown";
+}
+
 /** What's configured in this deployment. Powers the setup checklist on /admin. */
 export async function healthChecks(): Promise<Check[]> {
   let dbOk = false;
@@ -67,7 +72,7 @@ export async function healthChecks(): Promise<Check[]> {
     {
       name: "Payments (Stripe)",
       ok: stripeOk || env.allowMockPayments,
-      detail: stripeOk ? "Configured" : env.allowMockPayments ? "Mock checkout (dev only)" : !env.stripeSecret ? "STRIPE_SECRET_KEY missing" : "STRIPE_WEBHOOK_SECRET missing",
+      detail: stripeOk ? `Configured (${stripeMode()} mode)` : env.allowMockPayments ? "Mock checkout (dev only)" : !env.stripeSecret ? "STRIPE_SECRET_KEY missing" : "STRIPE_WEBHOOK_SECRET missing",
       fix: "Add STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET (webhook → /api/webhooks/stripe). See README.",
     },
     { name: "AI (fal.ai)", ok: !!env.falKey, detail: env.falKey ? "Configured" : "FAL_KEY missing (mock AI)", fix: "Add FAL_KEY." },
