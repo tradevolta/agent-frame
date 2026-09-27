@@ -2,8 +2,8 @@
 export const brand = {
   name: process.env.NEXT_PUBLIC_BRAND_NAME || "AgentFrame",
   tagline: "AI headshots & brand kits built for real estate agents",
-  domain: process.env.NEXT_PUBLIC_BRAND_DOMAIN || "agent-frame.ai",
-  supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@agent-frame.ai",
+  domain: process.env.NEXT_PUBLIC_BRAND_DOMAIN || "realagentframe.com",
+  supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@realagentframe.com",
   homeState: "North Carolina",
 };
 

@@ -16,7 +16,7 @@ export const env = {
   smtpPort: Number(process.env.SMTP_PORT || 465),
   smtpUser: process.env.SMTP_USER,
   smtpPass: process.env.SMTP_PASS,
-  emailFrom: process.env.EMAIL_FROM || process.env.SMTP_USER || "AgentFrame <studio@agent-frame.ai>",
+  emailFrom: process.env.EMAIL_FROM || process.env.SMTP_USER || "AgentFrame <studio@realagentframe.com>",
   get signingSecret(): string {
     const secret = process.env.APP_SIGNING_SECRET;
     if (!secret && process.env.NODE_ENV === "production") throw new Error("APP_SIGNING_SECRET must be set in production");
