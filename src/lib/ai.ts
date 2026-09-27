@@ -111,7 +111,7 @@ export function describeFalError(err: unknown): string {
   const base = [e?.status ? `fal.ai ${e.status}` : "fal.ai error", detail || e?.message || String(err)].join(": ");
   if (e?.status === 401) return `${base}. The FAL_KEY is wrong: it should look like key_id:key_secret.`;
   if (e?.status === 403 && /exhausted balance/i.test(base)) {
-    return `${base} fal.ai sees no balance on the account this FAL_KEY belongs to. If your dashboard shows credit, it's likely on a different account or team than the key: create the key while that account/team is selected.`;
+    return `${base} If your fal.ai dashboard shows credit, the lock can lag a top-up by up to an hour: retry later, and contact fal.ai support if it persists. Also check the key was created under the account or team that holds the credit.`;
   }
   if (e?.status === 403) return `${base}. Usually no credit on the fal.ai account (add credit under Billing) or a key without API scope.`;
   return base.slice(0, 400);
