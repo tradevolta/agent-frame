@@ -186,7 +186,7 @@ export async function submitOrder(order: Order, input: SubmitInput): Promise<voi
       .where(eq(orders.id, order.id));
     if (isMockAi()) await handleTrainingResult(order.id, { requestId, ok: true, output: { diffusers_lora_file: { url: "mock://lora" } } });
   } catch (err) {
-    await failOrder(order.id, `Training submit failed: ${String(err)}`);
+    await failOrder(order.id, `Training submit failed: ${ai.describeFalError(err)}`);
     throw err;
   }
 }

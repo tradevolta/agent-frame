@@ -3,7 +3,7 @@ import { like } from "drizzle-orm";
 import { getDb } from "./db";
 import { siteAssets } from "./db/schema";
 import { env, isMockAi } from "./env";
-import { extractImages } from "./ai";
+import { describeFalError, extractImages } from "./ai";
 import { persistRemote } from "./storage";
 import { STYLES, buildSamplePrompt, getStyle } from "./styles";
 import { UserError } from "./pipeline";
@@ -77,6 +77,6 @@ export async function generateSamples(styleIds: string[] = STYLES.map((s) => s.i
   const results = await Promise.allSettled(styleIds.map((id) => generateOne(id)));
   return styleIds.map((id, i) => {
     const r = results[i];
-    return r.status === "fulfilled" ? { style: id, ok: true } : { style: id, ok: false, error: String(r.reason).slice(0, 200) };
+    return r.status === "fulfilled" ? { style: id, ok: true } : { style: id, ok: false, error: describeFalError(r.reason) };
   });
 }

@@ -37,7 +37,13 @@ export function SamplesButton({ have, total }: { have: number; total: number }) 
       {results ? (
         <p className="mt-3 text-sm">
           {results.length - failed.length} generated.
-          {failed.length ? <span className="text-bad"> Failed: {failed.map((f) => `${f.style} (${f.error})`).join(", ")}</span> : null}
+          {failed.length ? (
+            // Every style usually fails for the same reason: show it once.
+            <span className="text-bad">
+              {" "}{failed.length} failed.{" "}
+              {[...new Set(failed.map((f) => f.error))].slice(0, 3).join(" / ")}
+            </span>
+          ) : null}
         </p>
       ) : null}
     </div>

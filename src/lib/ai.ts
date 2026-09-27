@@ -94,3 +94,22 @@ export function extractImages(output: unknown): string[] {
   if (!o?.images) return [];
   return o.images.filter((_, i) => !o.has_nsfw_concepts?.[i]).map((img) => img.url);
 }
+
+/**
+ * Human-readable reason from a fal.ai error, including the response body
+ * (e.g. "User is locked. Reason: Exhausted balance") and a hint for 401/403.
+ */
+export function describeFalError(err: unknown): string {
+  const e = err as { status?: number; body?: unknown; message?: string };
+  const body = e?.body as { detail?: unknown } | string | undefined;
+  let detail = "";
+  if (typeof body === "string") detail = body;
+  else if (body && typeof body === "object") {
+    const d = (body as { detail?: unknown }).detail;
+    detail = typeof d === "string" ? d : JSON.stringify(d ?? body);
+  }
+  const base = [e?.status ? `fal.ai ${e.status}` : "fal.ai error", detail || e?.message || String(err)].join(": ");
+  if (e?.status === 401) return `${base}. The FAL_KEY is wrong: it should look like key_id:key_secret.`;
+  if (e?.status === 403) return `${base}. Usually no credit on the fal.ai account (add credit under Billing) or a key without API scope.`;
+  return base.slice(0, 400);
+}

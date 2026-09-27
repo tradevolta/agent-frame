@@ -104,3 +104,18 @@ describe("email helpers", async () => {
     expect(zeptoAuthHeader("Zoho-enczapikey abc")).toBe("Zoho-enczapikey abc");
   });
 });
+
+describe("fal.ai error descriptions", async () => {
+  const { describeFalError } = await import("@/lib/ai");
+  it("includes the response detail and a hint for 403", () => {
+    const msg = describeFalError({ status: 403, body: { detail: "User is locked. Reason: Exhausted balance." }, message: "Forbidden" });
+    expect(msg).toContain("Exhausted balance");
+    expect(msg).toContain("credit");
+  });
+  it("explains a malformed key on 401", () => {
+    expect(describeFalError({ status: 401, body: { detail: "Invalid key" } })).toContain("key_id:key_secret");
+  });
+  it("handles plain errors", () => {
+    expect(describeFalError(new Error("network down"))).toContain("network down");
+  });
+});
