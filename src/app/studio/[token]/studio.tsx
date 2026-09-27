@@ -174,7 +174,7 @@ function Gauge({ pct, label }: { pct: number; label: string }) {
         />
       </svg>
       <div className="absolute inset-0 grid place-content-center text-center">
-        <span className="text-3xl font-semibold tabular-nums">{pct}%</span>
+        <span className="font-display text-4xl tabular-nums">{pct}%</span>
         {label ? <span className="mt-0.5 px-4 text-[11px] leading-tight text-muted">{label}</span> : null}
       </div>
     </div>
@@ -233,11 +233,14 @@ function Processing({ view }: { view: StatusView }) {
 
 function StepIcon({ state }: { state: Step["state"] }) {
   if (state === "done") return <CheckCircle size={20} weight="fill" className="mt-px shrink-0 text-ok" aria-label="done" />;
-  if (state === "todo") return <Circle size={20} className="mt-px shrink-0 text-line" aria-label="not started" />;
+  if (state === "todo") return <Circle size={20} className="mt-px shrink-0 text-muted" aria-label="not started" />;
   return (
-    <span className="relative mt-px grid h-5 w-5 shrink-0 place-items-center" aria-label={state === "active" ? "in progress" : "waiting"}>
-      <span className={`absolute h-5 w-5 rounded-full ${state === "active" ? "bg-accent/25" : "bg-muted/20"} animate-ping motion-reduce:animate-none`} />
-      <span className={`h-2.5 w-2.5 rounded-full ${state === "active" ? "bg-accent" : "bg-muted"}`} />
+    // Still, not pulsing: the site keeps motion restrained (see docs/DESIGN_AUDIT.md).
+    <span
+      className={`mt-px grid h-5 w-5 shrink-0 place-items-center rounded-full border-2 ${state === "active" ? "border-accent bg-accent-soft" : "border-muted/50"}`}
+      aria-label={state === "active" ? "in progress" : "waiting"}
+    >
+      <span className={`h-2 w-2 rounded-full ${state === "active" ? "bg-accent" : "bg-muted"}`} />
     </span>
   );
 }
