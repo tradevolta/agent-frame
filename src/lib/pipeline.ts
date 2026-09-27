@@ -175,11 +175,9 @@ export async function submitOrder(order: Order, input: SubmitInput): Promise<voi
     .returning();
   if (!claimed) throw new UserError("This shoot has already been submitted.");
 
-  // A temporary AI-provider problem leaves the order queued for an automatic
-  // retry; the customer sees "in line", not an error.
-  if ((await startTraining(claimed)) === "failed") {
-    throw new UserError("We couldn't start your shoot. We've been notified and will fix it or refund you.");
-  }
+  // Errors never reach the customer: a temporary problem queues the order for
+  // an automatic retry, anything else alerts the owner to retry from /admin.
+  await startTraining(claimed);
 }
 
 /** Zip the selfies (once) and submit training. Requeues or fails the order on error. */
@@ -373,8 +371,9 @@ async function failOrder(orderId: string, error: string) {
     .returning();
   console.error("[pipeline] order failed", orderId, error);
   if (!order) return;
-  if (order.email) await emails.generationFailed(order.email, order.token);
-  await notifyOwner(`Order failed: ${order.email ?? order.id}`, `<p>An order failed permanently and the customer was told you'll re-run or refund it.</p><p><b>Reason:</b> ${escapeHtml(error)}</p><p>Open /admin and press Retry once the cause is fixed.</p>`);
+  // The customer isn't told: their studio just shows "taking longer than usual"
+  // until you retry (or refund) from /admin.
+  await notifyOwner(`Order needs attention: ${order.email ?? order.id}`, `<p>An order stopped after its automatic retries. The customer has <b>not</b> been notified; their studio says it's taking longer than usual.</p><p><b>Reason:</b> ${escapeHtml(error)}</p><p>Open /admin and press Retry once the cause is fixed.</p>`);
 }
 
 // ---------------------------------------------------------------- retry queue

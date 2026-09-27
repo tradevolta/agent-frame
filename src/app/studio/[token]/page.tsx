@@ -29,6 +29,7 @@ export default async function StudioPage({ params }: PageProps<"/studio/[token]"
       initial={{
         status: order.status,
         progress,
+        startedAt: order.trainingStartedAt?.toISOString() ?? null,
         redosRemaining: order.redosRemaining,
         photos: photos.map((p) => ({ id: p.id, url: p.url, style: p.style, favorite: p.favorite })),
       }}

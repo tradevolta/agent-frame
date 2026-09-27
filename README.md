@@ -85,8 +85,10 @@ Cron jobs (`vercel.json`): daily webhook recovery sync and daily selfie purge (7
 
 Temporary AI-provider problems (a locked or empty fal.ai balance, rate limits, outages, network errors) don't fail
 the order. It goes back in line with backoff (2 min, 5, 15, 30 min, 1 h … up to 12 h; 10 tries, about 40 hours).
-The customer's studio shows "You're in line", and you get an email (`ALERT_EMAIL`, else the support address, at most
-hourly). Only errors that won't fix themselves, or running out of tries, fail the order.
+You get an email (`ALERT_EMAIL`, else the support address, at most hourly). Only errors that won't fix themselves,
+or running out of tries, fail the order, and that too only alerts you: customers are never told about failures.
+Their studio shows a progress gauge (payment, selfies, learning your face, taking photos, ready), and a queued or
+failed order reads as "next in line" until it's retried.
 
 Queued work is submitted by whichever comes first: the fal.ai webhook (fal is answering again), the customer's open
 studio page, `/api/queue/tick` (pinged every 10 minutes by `.github/workflows/queue-tick.yml`), or the daily cron.

@@ -116,17 +116,6 @@ export const emails = {
       ),
     });
   },
-  generationFailed(to: string, token: string) {
-    return sendEmail({
-      to,
-      subject: `We hit a snag with your ${brand.name} order`,
-      html: layout(
-        "Something went wrong. We're on it",
-        `<p>Your shoot didn't finish. Our team has been notified and will re-run it or refund you in full. No action needed.</p>`,
-        { label: "Check status", href: appUrl(`/studio/${token}`) },
-      ),
-    });
-  },
   teamPaid(to: string, teamToken: string, joinCode: string, seats: number, teamName: string) {
     return sendEmail({
       to,

@@ -1,5 +1,5 @@
 import "server-only";
-import { mkdir, writeFile, rm } from "node:fs/promises";
+import { mkdir, readFile, writeFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { appUrl } from "./brand";
 import { isMockStorage } from "./env";
@@ -40,6 +40,7 @@ export async function deleteFiles(items: Stored[]): Promise<void> {
 
 /** Copy a remote file (e.g. an expiring fal.ai output URL) into our storage. */
 export async function persistRemote(url: string, pathname: string): Promise<Stored> {
+  if (isMockStorage() && /\/api\/files\//.test(url)) return putFile(pathname, Buffer.from(await readFileBytes(url)), "image/jpeg");
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to fetch ${url}: ${res.status}`);
   const type = res.headers.get("content-type") || "image/jpeg";
@@ -47,6 +48,13 @@ export async function persistRemote(url: string, pathname: string): Promise<Stor
 }
 
 export async function readFileBytes(url: string): Promise<Uint8Array> {
+  // Local dev files: read from disk rather than over HTTP from our own server.
+  const local = isMockStorage() ? url.match(/\/api\/files\/(.+)$/)?.[1] : undefined;
+  if (local) {
+    const full = path.resolve(LOCAL_ROOT, decodeURIComponent(local));
+    if (!full.startsWith(LOCAL_ROOT + path.sep)) throw new Error("Invalid file path");
+    return new Uint8Array(await readFile(full));
+  }
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to fetch ${url}: ${res.status}`);
   return new Uint8Array(await res.arrayBuffer());

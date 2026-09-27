@@ -8,6 +8,8 @@ export interface PhotoView {
 export interface StatusView {
   status: string;
   progress: { total: number; done: number; waiting?: number };
+  /** When AI training started (ISO), for the time-based part of the gauge. */
+  startedAt?: string | null;
   redosRemaining: number;
   photos: PhotoView[];
 }

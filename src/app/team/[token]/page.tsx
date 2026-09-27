@@ -16,7 +16,7 @@ const LABEL: Record<string, string> = {
   training: "Processing",
   generating: "Processing",
   completed: "Done",
-  failed: "Issue: we're on it",
+  failed: "Processing",
 };
 
 export default async function TeamDashboard({ params }: PageProps<"/team/[token]">) {

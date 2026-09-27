@@ -107,10 +107,10 @@ describe("retry queue", () => {
     expect(rows.every((j) => j.status === "done")).toBe(true);
   }, 60_000);
 
-  it("fails right away on a non-retryable error, and admin retry recovers it", async () => {
+  it("fails right away (owner alert only) on a non-retryable error, and admin retry recovers it", async () => {
     const order = await paidOrderWithUploads();
     fal.training.push(invalid);
-    await expect(submitOrder(order, submitInput)).rejects.toThrow(/couldn't start/);
+    await expect(submitOrder(order, submitInput)).resolves.toBeUndefined(); // the customer never sees an error
     expect((await reload(order.id)).status).toBe("failed");
 
     await retryOrder(order.id);

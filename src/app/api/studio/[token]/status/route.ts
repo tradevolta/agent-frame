@@ -17,6 +17,7 @@ export const GET = handle(async (_req: Request, { params }: { params: Promise<{ 
   return json({
     status: order.status,
     progress,
+    startedAt: order.trainingStartedAt?.toISOString() ?? null,
     redosRemaining: order.redosRemaining,
     photos: photos.map((p) => ({ id: p.id, url: p.url, style: p.style, favorite: p.favorite })),
   });
