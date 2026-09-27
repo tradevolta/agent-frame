@@ -3,6 +3,7 @@ import { pgTable, text, integer, timestamp, boolean, jsonb, uuid, index, uniqueI
 export type OrderStatus =
   | "pending_payment"
   | "awaiting_upload"
+  | "queued" // paid + submitted, waiting for the AI provider (automatic retry)
   | "training"
   | "generating"
   | "completed"
@@ -64,12 +65,15 @@ export const orders = pgTable(
     referralCount: integer("referral_count").notNull().default(0),
     estCostCents: integer("est_cost_cents").notNull().default(0),
     error: text("error"),
+    // Retry queue: attempts so far and when the next automatic attempt is due.
+    attempts: integer("attempts").notNull().default(0),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }),
     uploadsPurgedAt: timestamp("uploads_purged_at", { withTimezone: true }),
     completedAt: timestamp("completed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index("orders_status_idx").on(t.status), index("orders_email_idx").on(t.email)],
+  (t) => [index("orders_status_idx").on(t.status), index("orders_email_idx").on(t.email), index("orders_next_attempt_idx").on(t.nextAttemptAt)],
 );
 
 export const uploads = pgTable(
@@ -94,10 +98,17 @@ export const jobs = pgTable(
     requestId: text("request_id"),
     status: text("status").$type<"queued" | "submitted" | "processing" | "done" | "failed">().notNull().default("queued"),
     isRedo: boolean("is_redo").notNull().default(false),
+    attempts: integer("attempts").notNull().default(0),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }),
+    error: text("error"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index("jobs_order_idx").on(t.orderId), uniqueIndex("jobs_request_idx").on(t.requestId)],
+  (t) => [
+    index("jobs_order_idx").on(t.orderId),
+    uniqueIndex("jobs_request_idx").on(t.requestId),
+    index("jobs_next_attempt_idx").on(t.status, t.nextAttemptAt),
+  ],
 );
 
 export const photos = pgTable(

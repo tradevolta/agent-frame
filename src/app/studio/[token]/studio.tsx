@@ -22,7 +22,7 @@ interface Props {
   maxUploads: number;
 }
 
-const POLL_MS: Record<string, number> = { pending_payment: 2500, training: 10000, generating: 6000 };
+const POLL_MS: Record<string, number> = { pending_payment: 2500, queued: 30000, training: 10000, generating: 6000 };
 
 export function Studio(props: Props) {
   const [view, setView] = useState<StatusView>(props.initial);
@@ -71,7 +71,7 @@ export function Studio(props: Props) {
         />
       )}
 
-      {(view.status === "training" || view.status === "generating") && <Processing view={view} />}
+      {(view.status === "queued" || view.status === "training" || view.status === "generating") && <Processing view={view} />}
 
       {view.status === "completed" && (
         <>
@@ -113,16 +113,22 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
 }
 
 function Processing({ view }: { view: StatusView }) {
-  const pct = view.status === "training" ? 8 : view.progress.total ? 15 + Math.round((view.progress.done / view.progress.total) * 85) : 15;
+  const pct = view.status === "queued" ? 3 : view.status === "training" ? 8 : view.progress.total ? 15 + Math.round((view.progress.done / view.progress.total) * 85) : 15;
+  const title = view.status === "queued" ? "You're in line" : view.status === "training" ? "Learning your features…" : "Photographing you in each style…";
   return (
     <div className="card max-w-2xl p-8">
-      <h2 className="text-xl font-semibold">{view.status === "training" ? "Learning your features…" : "Photographing you in each style…"}</h2>
+      <h2 className="text-xl font-semibold">{title}</h2>
       <p className="mt-2 text-muted">
-        {view.status === "training"
-          ? "We're training your private AI model. This is the longest step (usually 20-40 minutes)."
-          : `Generating your headshots${view.progress.total ? ` (${view.progress.done}/${view.progress.total} batches done)` : ""}.`}{" "}
+        {view.status === "queued"
+          ? "Our AI studio is busy right now, so your shoot is queued and will start automatically. Your photos and settings are saved; there's nothing you need to do."
+          : view.status === "training"
+            ? "We're training your private AI model. This is the longest step (usually 20-40 minutes)."
+            : `Generating your headshots${view.progress.total ? ` (${view.progress.done}/${view.progress.total} batches done)` : ""}.`}{" "}
         You can close this page. We&apos;ll email you when everything is ready.
       </p>
+      {view.status === "generating" && view.progress.waiting ? (
+        <p className="mt-2 text-sm text-muted">A few styles are waiting their turn and will finish automatically.</p>
+      ) : null}
       <div className="mt-6 h-3 overflow-hidden rounded-full bg-line">
         <div className="h-full rounded-full bg-accent transition-all duration-700" style={{ width: `${pct}%` }} />
       </div>

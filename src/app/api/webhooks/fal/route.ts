@@ -1,5 +1,6 @@
 import { parseFalWebhook } from "@/lib/ai";
-import { handleGenerationResult, handleTrainingResult } from "@/lib/pipeline";
+import { after } from "next/server";
+import { claimSlot, handleGenerationResult, handleTrainingResult, processQueue } from "@/lib/pipeline";
 import { verify } from "@/lib/tokens";
 
 export const maxDuration = 120;
@@ -17,5 +18,11 @@ export async function POST(req: Request) {
   if (!result) return new Response("Bad payload", { status: 400 });
   if (kind === "train") await handleTrainingResult(id, result);
   else await handleGenerationResult(id, result);
+  // fal.ai is answering again: submit anything waiting in the retry queue.
+  if (result.ok) {
+    after(async () => {
+      if (await claimSlot("queue:webhook", 30)) await processQueue().catch((e) => console.error("[queue]", e));
+    });
+  }
   return Response.json({ ok: true });
 }

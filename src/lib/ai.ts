@@ -116,3 +116,14 @@ export function describeFalError(err: unknown): string {
   if (e?.status === 403) return `${base}. Usually no credit on the fal.ai account (add credit under Billing) or a key without API scope.`;
   return base.slice(0, 400);
 }
+
+/**
+ * Worth retrying later: network errors, timeouts, rate limits, fal.ai outages,
+ * and account problems the owner can fix (bad key, locked or empty balance).
+ * Anything else (e.g. 422 invalid input) fails right away.
+ */
+export function isRetryableFalError(err: unknown): boolean {
+  const status = (err as { status?: number })?.status;
+  if (!status) return true;
+  return status === 401 || status === 403 || status === 408 || status === 409 || status === 425 || status === 429 || status >= 500;
+}

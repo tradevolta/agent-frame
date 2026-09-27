@@ -7,7 +7,7 @@ export interface PhotoView {
 
 export interface StatusView {
   status: string;
-  progress: { total: number; done: number };
+  progress: { total: number; done: number; waiting?: number };
   redosRemaining: number;
   photos: PhotoView[];
 }

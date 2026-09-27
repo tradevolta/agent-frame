@@ -12,6 +12,7 @@ export const metadata: Metadata = { title: "Team dashboard", robots: { index: fa
 
 const LABEL: Record<string, string> = {
   awaiting_upload: "Needs to upload",
+  queued: "In line (starts automatically)",
   training: "Processing",
   generating: "Processing",
   completed: "Done",

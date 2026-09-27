@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { desc, sql } from "drizzle-orm";
+import { desc, inArray, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
-import { leads, orders, subscriptions, teams } from "@/lib/db/schema";
+import { jobs, leads, orders, subscriptions, teams } from "@/lib/db/schema";
 import { formatUsd } from "@/lib/plans";
 import { RetryButton } from "./retry-button";
 import { SamplesButton } from "./samples-button";
+import { QueuePanel } from "./queue-panel";
+import { queueSummary } from "@/lib/pipeline";
 import { LogoutButton } from "./logout-button";
 import { getSampleUrls } from "@/lib/samples";
 import { STYLES } from "@/lib/styles";
@@ -85,7 +87,7 @@ async function SafeDashboard() {
 
 async function Dashboard() {
   const db = await getDb();
-  const [[totals], recent, teamRows, leadRows, [subCount], samples] = await Promise.all([
+  const [[totals], recent, teamRows, leadRows, [subCount], samples, queue] = await Promise.all([
     db
       .select({
         paid: sql<number>`count(*) filter (where ${orders.status} not in ('pending_payment','refunded'))::int`,
@@ -101,7 +103,21 @@ async function Dashboard() {
     db.select().from(leads).orderBy(desc(leads.createdAt)).limit(50),
     db.select({ n: sql<number>`count(*) filter (where ${subscriptions.status} = 'active')::int` }).from(subscriptions),
     getSampleUrls(),
+    queueSummary(),
   ]);
+  // Per-order batch problems, so partially failed orders can be retried too.
+  const jobStats = recent.length
+    ? await db
+        .select({
+          orderId: jobs.orderId,
+          failed: sql<number>`count(*) filter (where ${jobs.status} = 'failed')::int`,
+          waiting: sql<number>`count(*) filter (where ${jobs.status} = 'queued' and ${jobs.attempts} > 0)::int`,
+        })
+        .from(jobs)
+        .where(inArray(jobs.orderId, recent.map((o) => o.id)))
+        .groupBy(jobs.orderId)
+    : [];
+  const batches = new Map(jobStats.map((j) => [j.orderId, j]));
   const teamRevenue = teamRows.filter((t) => t.status === "active").reduce((s, t) => s + t.amountCents, 0);
 
   return (
@@ -113,6 +129,9 @@ async function Dashboard() {
         <Stat label="Est. AI cost" value={formatUsd(totals.cost)} />
         <Stat label="Active subscribers" value={String(subCount.n)} />
         <Stat label="Abandoned checkouts" value={String(totals.abandoned)} />
+      </div>
+      <div className="mt-6">
+        <QueuePanel summary={{ ...queue, nextAttemptAt: queue.nextAttemptAt?.toISOString() ?? null }} />
       </div>
       <div className="mt-6"><SamplesButton have={Object.keys(samples).length} total={STYLES.length} /></div>
       {totals.failed ? <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-bad">{totals.failed} failed order(s) need attention: retry below or refund in Stripe.</p> : null}
@@ -127,12 +146,20 @@ async function Dashboard() {
                 <td className="p-2 whitespace-nowrap">{o.createdAt.toLocaleString()}</td>
                 <td className="p-2">{o.email ?? "-"}</td>
                 <td className="p-2">{o.plan}{o.teamId ? " (team)" : ""}{o.subscriptionId ? " (sub)" : ""}</td>
-                <td className="p-2"><span className={o.status === "failed" ? "font-semibold text-bad" : ""}>{o.status}</span>{o.error ? <div className="max-w-xs truncate text-xs text-muted" title={o.error}>{o.error}</div> : null}</td>
+                <td className="p-2">
+                  <span className={o.status === "failed" ? "font-semibold text-bad" : ""}>{o.status}</span>
+                  {o.status === "queued" && o.nextAttemptAt ? (
+                    <div className="text-xs text-muted">try {o.attempts + 1}, next {o.nextAttemptAt.toLocaleTimeString()}</div>
+                  ) : null}
+                  {batches.get(o.id)?.failed ? <div className="text-xs text-bad">{batches.get(o.id)!.failed} batch(es) failed</div> : null}
+                  {batches.get(o.id)?.waiting ? <div className="text-xs text-muted">{batches.get(o.id)!.waiting} batch(es) waiting to retry</div> : null}
+                  {o.error ? <div className="max-w-xs truncate text-xs text-muted" title={o.error}>{o.error}</div> : null}
+                </td>
                 <td className="p-2">{formatUsd(o.amountCents)}</td>
                 <td className="p-2">{formatUsd(o.estCostCents)}</td>
                 <td className="p-2 text-xs">{o.referredBy ?? ""}{o.referralCount ? ` → ${o.referralCount} refs` : ""}</td>
                 <td className="p-2"><a className="text-accent underline" href={`/studio/${o.token}`} target="_blank">open</a></td>
-                <td className="p-2">{o.status === "failed" ? <RetryButton orderId={o.id} /> : null}</td>
+                <td className="p-2">{o.status === "failed" || o.status === "queued" || batches.get(o.id)?.failed || batches.get(o.id)?.waiting ? <RetryButton orderId={o.id} /> : null}</td>
               </tr>
             ))}
           </tbody>

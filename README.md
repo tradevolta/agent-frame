@@ -80,7 +80,18 @@ domain before taking real orders. As a fallback, a studio page also asks Stripe 
 order was paid.
 
 Cron jobs (`vercel.json`): daily webhook recovery sync and daily selfie purge (7-day retention).
-On Vercel Pro you can make the sync hourly.
+
+### When fal.ai fails: the retry queue
+
+Temporary AI-provider problems (a locked or empty fal.ai balance, rate limits, outages, network errors) don't fail
+the order. It goes back in line with backoff (2 min, 5, 15, 30 min, 1 h … up to 12 h; 10 tries, about 40 hours).
+The customer's studio shows "You're in line", and you get an email (`ALERT_EMAIL`, else the support address, at most
+hourly). Only errors that won't fix themselves, or running out of tries, fail the order.
+
+Queued work is submitted by whichever comes first: the fal.ai webhook (fal is answering again), the customer's open
+studio page, `/api/queue/tick` (pinged every 10 minutes by `.github/workflows/queue-tick.yml`), or the daily cron.
+In `/admin`, **Retry queue** shows what's waiting and why, with **Run queue now** and **Retry all failed orders**.
+Each order row has **Retry** for failed, queued, or partly failed orders.
 
 ## Where things live
 

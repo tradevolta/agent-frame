@@ -165,3 +165,9 @@ export const emails = {
     });
   },
 };
+
+/** Operational alerts for the business owner (ALERT_EMAIL, else the support address). */
+export function notifyOwner(subject: string, html: string) {
+  const to = process.env.ALERT_EMAIL || brand.supportEmail;
+  return sendEmail({ to, subject: `[${brand.name}] ${subject}`, html: layout(subject, html, { label: "Open admin", href: appUrl("/admin") }) });
+}

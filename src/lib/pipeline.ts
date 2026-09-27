@@ -1,10 +1,10 @@
 import "server-only";
-import { and, eq, inArray, isNull, lt, notInArray, or, sql } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull, lt, lte, notInArray, or, sql } from "drizzle-orm";
 import { getDb } from "./db";
 import { jobs, leads, orders, photos, teams, uploads, type Job, type Order } from "./db/schema";
 import * as ai from "./ai";
 import { appUrl } from "./brand";
-import { emails } from "./email";
+import { emails, notifyOwner } from "./email";
 import { isMockAi } from "./env";
 import { PLANS, isPlanId } from "./plans";
 import { deleteFiles, persistRemote, putFile, readFileBytes } from "./storage";
@@ -166,28 +166,57 @@ export async function submitOrder(order: Order, input: SubmitInput): Promise<voi
       attire: input.attire,
       backdropColor: backdrop ?? null,
       styles,
-      trainingStartedAt: new Date(),
       error: null,
+      attempts: 0,
+      nextAttemptAt: null,
       updatedAt: new Date(),
     })
     .where(and(eq(orders.id, order.id), eq(orders.status, "awaiting_upload")))
     .returning();
   if (!claimed) throw new UserError("This shoot has already been submitted.");
 
+  // A temporary AI-provider problem leaves the order queued for an automatic
+  // retry; the customer sees "in line", not an error.
+  if ((await startTraining(claimed)) === "failed") {
+    throw new UserError("We couldn't start your shoot. We've been notified and will fix it or refund you.");
+  }
+}
+
+/** Zip the selfies (once) and submit training. Requeues or fails the order on error. */
+async function startTraining(order: Order): Promise<"started" | "queued" | "failed"> {
+  const db = await getDb();
   try {
-    const entries = await Promise.all(
-      files.map(async (f, i) => ({ name: `photo_${String(i + 1).padStart(2, "0")}.jpg`, data: await readFileBytes(f.url) })),
-    );
-    const zip = await putFile(`training/${order.id}/images.zip`, Buffer.from(makeZip(entries)), "application/zip");
+    let zip = order.trainingZip;
+    if (!zip) {
+      const files = await listUploads(order.id);
+      if (files.length < MIN_UPLOADS) {
+        throw new UserError("The selfies for this order are no longer available (they're deleted after 7 days).");
+      }
+      const entries = await Promise.all(
+        files.map(async (f, i) => ({ name: `photo_${String(i + 1).padStart(2, "0")}.jpg`, data: await readFileBytes(f.url) })),
+      );
+      zip = await putFile(`training/${order.id}/images.zip`, Buffer.from(makeZip(entries)), "application/zip");
+      await db.update(orders).set({ trainingZip: zip }).where(eq(orders.id, order.id));
+    }
     const requestId = await ai.submitTraining(zip.url, webhookUrl("train", order.id));
     await db
       .update(orders)
-      .set({ trainingRequestId: requestId, trainingZip: zip, estCostCents: sql`${orders.estCostCents} + ${TRAIN_COST_CENTS}` })
+      .set({
+        status: "training",
+        trainingRequestId: requestId,
+        trainingStartedAt: new Date(),
+        nextAttemptAt: null,
+        error: null,
+        estCostCents: sql`${orders.estCostCents} + ${TRAIN_COST_CENTS}`,
+        updatedAt: new Date(),
+      })
       .where(eq(orders.id, order.id));
     if (isMockAi()) await handleTrainingResult(order.id, { requestId, ok: true, output: { diffusers_lora_file: { url: "mock://lora" } } });
+    return "started";
   } catch (err) {
-    await failOrder(order.id, `Training submit failed: ${ai.describeFalError(err)}`);
-    throw err;
+    const retryable = !(err instanceof UserError) && ai.isRetryableFalError(err);
+    const reason = err instanceof UserError ? err.message : ai.describeFalError(err);
+    return requeueOrder(order, `Training submit failed: ${reason}`, retryable);
   }
 }
 
@@ -196,7 +225,10 @@ export async function submitOrder(order: Order, input: SubmitInput): Promise<voi
 export async function handleTrainingResult(orderId: string, result: ai.FalWebhook): Promise<void> {
   const db = await getDb();
   if (!result.ok) {
-    await failOrder(orderId, `Training failed: ${result.error}`);
+    const [current] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
+    // Ignore late results from an earlier attempt.
+    if (!current || current.status !== "training" || (current.trainingRequestId && result.requestId && current.trainingRequestId !== result.requestId)) return;
+    await requeueOrder(current, `Training failed: ${result.error}`, current.attempts < MAX_RESULT_RETRIES);
     return;
   }
   const loraUrl = ai.extractLoraUrl(result.output);
@@ -258,7 +290,7 @@ async function submitJob(order: Order, job: Job): Promise<void> {
     if (isMockAi()) await handleGenerationResult(job.id, { requestId, ok: true, output: await mockImages(order, job) });
   } catch (err) {
     console.error("[pipeline] submit job failed", job.id, err);
-    await db.update(jobs).set({ status: "failed", updatedAt: new Date() }).where(eq(jobs.id, job.id));
+    await requeueJob(job, ai.describeFalError(err), ai.isRetryableFalError(err));
     await maybeFinishOrder(order.id);
   }
 }
@@ -301,10 +333,11 @@ export async function handleGenerationResult(jobId: string, result: ai.FalWebhoo
       .update(orders)
       .set({ estCostCents: sql`${orders.estCostCents} + ${rows.length * IMAGE_COST_CENTS}` })
       .where(eq(orders.id, job.orderId));
+    await db.update(jobs).set({ status: "done", error: null, updatedAt: new Date() }).where(eq(jobs.id, job.id));
   } else {
     console.error("[pipeline] generation failed", jobId, result.error);
+    await requeueJob(job, `Generation failed: ${result.error ?? "unknown error"}`, job.attempts < MAX_RESULT_RETRIES);
   }
-  await db.update(jobs).set({ status: result.ok ? "done" : "failed", updatedAt: new Date() }).where(eq(jobs.id, job.id));
   await maybeFinishOrder(job.orderId);
 }
 
@@ -339,7 +372,199 @@ async function failOrder(orderId: string, error: string) {
     .where(and(eq(orders.id, orderId), notInArray(orders.status, ["failed", "completed", "refunded"])))
     .returning();
   console.error("[pipeline] order failed", orderId, error);
-  if (order?.email) await emails.generationFailed(order.email, order.token);
+  if (!order) return;
+  if (order.email) await emails.generationFailed(order.email, order.token);
+  await notifyOwner(`Order failed: ${order.email ?? order.id}`, `<p>An order failed permanently and the customer was told you'll re-run or refund it.</p><p><b>Reason:</b> ${escapeHtml(error)}</p><p>Open /admin and press Retry once the cause is fixed.</p>`);
+}
+
+// ---------------------------------------------------------------- retry queue
+//
+// The database is the queue. Temporary AI-provider problems (outages, rate
+// limits, a locked or empty fal.ai balance) put the order or batch back in line
+// with exponential backoff instead of failing it. processQueue() submits
+// whatever is due; it runs from the fal.ai webhook, the studio status poll,
+// /api/queue/tick (pinged every 10 minutes by GitHub Actions), the daily cron
+// and the admin "Run queue now" button.
+
+/** Minutes to wait after the Nth failed attempt. About 40 hours in total. */
+const BACKOFF_MINUTES = [2, 5, 15, 30, 60, 120, 240, 480, 720, 720];
+export const MAX_ATTEMPTS = BACKOFF_MINUTES.length;
+/** A job fal.ai accepted but then failed is retried this many times only. */
+const MAX_RESULT_RETRIES = 2;
+
+export function retryDelayMs(attemptsSoFar: number): number {
+  return BACKOFF_MINUTES[Math.min(attemptsSoFar, BACKOFF_MINUTES.length - 1)] * 60_000;
+}
+
+function escapeHtml(s: string) {
+  return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+}
+
+async function requeueOrder(order: Order, error: string, retryable: boolean): Promise<"queued" | "failed"> {
+  if (!retryable || order.attempts + 1 >= MAX_ATTEMPTS) {
+    await failOrder(order.id, error);
+    return "failed";
+  }
+  const db = await getDb();
+  await db
+    .update(orders)
+    .set({
+      status: "queued",
+      attempts: order.attempts + 1,
+      nextAttemptAt: new Date(Date.now() + retryDelayMs(order.attempts)),
+      trainingRequestId: null,
+      error,
+      updatedAt: new Date(),
+    })
+    .where(eq(orders.id, order.id));
+  console.warn("[queue] order requeued", order.id, error);
+  await alertQueued(error);
+  return "queued";
+}
+
+async function requeueJob(job: Job, error: string, retryable: boolean): Promise<void> {
+  const db = await getDb();
+  if (!retryable || job.attempts + 1 >= MAX_ATTEMPTS) {
+    await db.update(jobs).set({ status: "failed", error, updatedAt: new Date() }).where(eq(jobs.id, job.id));
+    return;
+  }
+  await db
+    .update(jobs)
+    .set({
+      status: "queued",
+      requestId: null,
+      attempts: job.attempts + 1,
+      nextAttemptAt: new Date(Date.now() + retryDelayMs(job.attempts)),
+      error,
+      updatedAt: new Date(),
+    })
+    .where(eq(jobs.id, job.id));
+  console.warn("[queue] job requeued", job.id, error);
+  await alertQueued(error);
+}
+
+/** At most one "orders are waiting" email per hour. */
+async function alertQueued(error: string) {
+  if (!(await claimSlot("alert:queued", 3600))) return;
+  await notifyOwner(
+    "Orders are waiting in the retry queue",
+    `<p>The AI provider refused a request, so the order was queued for an automatic retry. Customers see "in line", not an error.</p><p><b>Reason:</b> ${escapeHtml(error)}</p><p>Fix the cause (e.g. fal.ai balance), then press <b>Run queue now</b> in /admin.</p>`,
+  );
+}
+
+/**
+ * Cross-instance rate limit: true at most once per `seconds` for `key`.
+ * Uses a site_assets row as a timestamp.
+ */
+export async function claimSlot(key: string, seconds: number): Promise<boolean> {
+  const db = await getDb();
+  const rows = await db.execute(sql`
+    insert into site_assets (key, url, pathname, updated_at) values (${key}, '', '', now())
+    on conflict (key) do update set updated_at = now()
+    where site_assets.updated_at < now() - make_interval(secs => ${seconds})
+    returning key`);
+  const list = Array.isArray(rows) ? rows : (rows as { rows?: unknown[] }).rows ?? [];
+  return list.length > 0;
+}
+
+/**
+ * Submit everything that's due. `force` ignores the backoff (admin button).
+ * Scoped to one order when `orderId` is given (studio status poll).
+ */
+export async function processQueue(opts: { orderId?: string; force?: boolean } = {}): Promise<{ orders: number; jobs: number }> {
+  const db = await getDb();
+  const now = new Date();
+  const stuckBefore = new Date(Date.now() - 10 * 60_000);
+  const lease = new Date(Date.now() + 10 * 60_000);
+  const scopeOrder = opts.orderId ? eq(orders.id, opts.orderId) : undefined;
+
+  // 1. Orders waiting to (re)start training, plus any claimed but never submitted (crash).
+  const dueOrder = or(
+    and(eq(orders.status, "queued"), opts.force ? undefined : or(isNull(orders.nextAttemptAt), lte(orders.nextAttemptAt, now))),
+    and(eq(orders.status, "training"), isNull(orders.trainingRequestId), lt(orders.updatedAt, stuckBefore)),
+  );
+  const orderIds = await db.select({ id: orders.id }).from(orders).where(and(dueOrder, scopeOrder)).limit(5);
+  let startedOrders = 0;
+  for (const { id } of orderIds) {
+    const [claimed] = await db
+      .update(orders)
+      .set({ status: "training", trainingRequestId: null, updatedAt: new Date() })
+      .where(and(eq(orders.id, id), dueOrder))
+      .returning();
+    if (!claimed) continue;
+    await startTraining(claimed).catch((e) => console.error("[queue] training", id, e));
+    startedOrders++;
+  }
+
+  // 2. Generation batches waiting to be (re)submitted, plus any left "queued" by a crash.
+  const dueJob = and(
+    eq(jobs.status, "queued"),
+    opts.force
+      ? undefined
+      : or(lte(jobs.nextAttemptAt, now), and(isNull(jobs.nextAttemptAt), lt(jobs.updatedAt, stuckBefore))),
+  );
+  const candidates = await db
+    .select({ job: jobs, order: orders })
+    .from(jobs)
+    .innerJoin(orders, eq(jobs.orderId, orders.id))
+    .where(and(dueJob, isNotNull(orders.loraUrl), inArray(orders.status, ["generating", "completed"]), scopeOrder))
+    .limit(30);
+  let submitted = 0;
+  await Promise.all(
+    candidates.map(async ({ job, order }) => {
+      // Lease the job so a concurrent run doesn't submit it twice.
+      const [claimed] = await db
+        .update(jobs)
+        .set({ nextAttemptAt: lease, updatedAt: new Date() })
+        .where(and(eq(jobs.id, job.id), dueJob))
+        .returning();
+      if (!claimed) return;
+      await submitJob(order, claimed);
+      submitted++;
+    }),
+  );
+  return { orders: startedOrders, jobs: submitted };
+}
+
+/** Counts for the admin queue panel. */
+export async function queueSummary() {
+  const db = await getDb();
+  const [o] = await db
+    .select({
+      queued: sql<number>`count(*) filter (where ${orders.status} = 'queued')::int`,
+      failed: sql<number>`count(*) filter (where ${orders.status} = 'failed')::int`,
+      next: sql<Date | null>`min(${orders.nextAttemptAt}) filter (where ${orders.status} = 'queued')`,
+    })
+    .from(orders);
+  const [j] = await db
+    .select({
+      queued: sql<number>`count(*) filter (where ${jobs.status} = 'queued')::int`,
+      failed: sql<number>`count(*) filter (where ${jobs.status} = 'failed')::int`,
+      next: sql<Date | null>`min(${jobs.nextAttemptAt}) filter (where ${jobs.status} = 'queued')`,
+    })
+    .from(jobs);
+  const [last] = await db
+    .select({ error: jobs.error, at: jobs.updatedAt })
+    .from(jobs)
+    .where(and(eq(jobs.status, "queued"), isNotNull(jobs.error)))
+    .orderBy(sql`${jobs.updatedAt} desc`)
+    .limit(1);
+  const [lastOrder] = await db
+    .select({ error: orders.error, at: orders.updatedAt })
+    .from(orders)
+    .where(eq(orders.status, "queued"))
+    .orderBy(sql`${orders.updatedAt} desc`)
+    .limit(1);
+  const nexts = [o.next, j.next].filter(Boolean).map((d) => new Date(d as Date));
+  const latest = [last, lastOrder].filter((x) => x?.error).sort((a, b) => +new Date(b!.at) - +new Date(a!.at))[0];
+  return {
+    queuedOrders: o.queued,
+    failedOrders: o.failed,
+    queuedJobs: j.queued,
+    failedJobs: j.failed,
+    nextAttemptAt: nexts.length ? new Date(Math.min(...nexts.map((d) => +d))) : null,
+    lastError: latest?.error ?? null,
+  };
 }
 
 // ---------------------------------------------------------------- redo & retry
@@ -362,37 +587,51 @@ export async function redoStyle(order: Order, styleId: string): Promise<void> {
   await submitJob(updated, job);
 }
 
-/** Admin: re-run a failed order from its last good step. */
+/**
+ * Admin: re-run an order now from its last good step. Works for failed and
+ * queued orders, and for finished orders with failed or waiting batches.
+ * Resets the retry counters.
+ */
 export async function retryOrder(orderId: string): Promise<void> {
   const db = await getDb();
   const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
-  if (!order || order.status !== "failed") return;
-  if (order.loraUrl) {
-    const failed = await db
-      .update(jobs)
-      .set({ status: "queued", updatedAt: new Date() })
-      .where(and(eq(jobs.orderId, orderId), eq(jobs.status, "failed")))
-      .returning();
+  if (!order) return;
+  if (!order.loraUrl) {
+    if (order.status !== "failed" && order.status !== "queued") return;
+    if (!order.styles.length) throw new UserError("This order was never submitted: the customer hasn't finished uploading.");
     const [o] = await db
       .update(orders)
-      .set({ status: "generating", error: null, updatedAt: new Date() })
-      .where(eq(orders.id, orderId))
+      .set({ status: "training", error: null, attempts: 0, nextAttemptAt: null, trainingRequestId: null, updatedAt: new Date() })
+      .where(and(eq(orders.id, orderId), inArray(orders.status, ["failed", "queued"])))
       .returning();
-    if (failed.length) await submitJobs(o, failed);
-    else await maybeFinishOrder(orderId);
-  } else {
-    const [o] = await db
-      .update(orders)
-      .set({ status: "awaiting_upload", error: null, trainingRequestId: null, updatedAt: new Date() })
-      .where(eq(orders.id, orderId))
-      .returning();
-    await submitOrder(o, {
-      subject: (o.subject as Subject) || "person",
-      attire: (o.attire as Attire) || "style_default",
-      backdropColor: o.backdropColor ?? undefined,
-      styles: o.styles,
-    });
+    if (!o) return;
+    if ((await startTraining(o)) === "failed") {
+      const [after] = await db.select({ error: orders.error }).from(orders).where(eq(orders.id, orderId)).limit(1);
+      throw new UserError(after?.error ?? "Retry failed");
+    }
+    return;
   }
+  if (!["failed", "generating", "completed"].includes(order.status)) return;
+  const retry = await db
+    .update(jobs)
+    .set({ status: "queued", attempts: 0, nextAttemptAt: null, error: null, updatedAt: new Date() })
+    .where(and(eq(jobs.orderId, orderId), inArray(jobs.status, ["failed", "queued"])))
+    .returning();
+  const [o] = await db
+    .update(orders)
+    .set({ status: order.status === "failed" ? "generating" : order.status, error: null, attempts: 0, updatedAt: new Date() })
+    .where(eq(orders.id, orderId))
+    .returning();
+  if (retry.length) await submitJobs(o, retry);
+  else await maybeFinishOrder(orderId);
+}
+
+/** Admin: retry every failed order. */
+export async function retryAllFailed(): Promise<number> {
+  const db = await getDb();
+  const failed = await db.select({ id: orders.id }).from(orders).where(eq(orders.status, "failed")).limit(50);
+  for (const { id } of failed) await retryOrder(id).catch((e) => console.error("[retry all]", id, e));
+  return failed.length;
 }
 
 // ---------------------------------------------------------------- polling fallback
@@ -463,7 +702,8 @@ export async function orderPhotos(orderId: string) {
 
 export async function orderJobsSummary(orderId: string) {
   const db = await getDb();
-  const rows = await db.select({ status: jobs.status }).from(jobs).where(eq(jobs.orderId, orderId));
+  const rows = await db.select({ status: jobs.status, attempts: jobs.attempts }).from(jobs).where(eq(jobs.orderId, orderId));
   const done = rows.filter((r) => r.status === "done" || r.status === "failed").length;
-  return { total: rows.length, done };
+  const waiting = rows.filter((r) => r.status === "queued" && r.attempts > 0).length;
+  return { total: rows.length, done, waiting };
 }
