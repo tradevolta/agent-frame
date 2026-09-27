@@ -18,7 +18,7 @@ See [`docs/MARKETING.md`](docs/MARKETING.md) for domain ideas and the go-to-mark
 | Concern | Choice | Local fallback (no keys) |
 |---|---|---|
 | App | Next.js 16 (App Router) on Vercel | – |
-| Database | Postgres via Neon + Drizzle ORM | Embedded PGlite in `.data/` |
+| Database | Postgres (Supabase or Neon) + Drizzle ORM | Embedded PGlite in `.data/` |
 | Payments | Stripe Checkout + webhooks | Fake checkout at `/api/mock-checkout` |
 | AI | fal.ai: FLUX LoRA portrait trainer + FLUX LoRA generation | Echoes your uploads back as "results" |
 | Storage | Vercel Blob | Local disk served by `/api/files` |
@@ -49,8 +49,9 @@ npm run e2e:mock
 ## Deploy to Vercel (about 30 minutes)
 
 1. **Import the repo** in Vercel → New Project. Framework: Next.js (defaults are fine).
-2. **Storage** tab → add **Neon Postgres** (sets `DATABASE_URL`) and **Blob** (sets `BLOB_READ_WRITE_TOKEN`).
-   Migrations run automatically during `npm run build`.
+2. **Storage** tab → connect **Supabase** (sets `POSTGRES_URL`…) or **Neon** (sets `DATABASE_URL`), and **Blob**
+   (sets `BLOB_READ_WRITE_TOKEN`). Migrations run automatically during `npm run build`, including one that enables
+   row-level security on every table so Supabase's public API key can't read or write them.
 3. **Stripe** (start in test mode):
    - Copy the secret key → `STRIPE_SECRET_KEY`.
    - Developers → Webhooks → add endpoint `https://YOURDOMAIN/api/webhooks/stripe` with events

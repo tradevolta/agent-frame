@@ -2,6 +2,7 @@ import "server-only";
 import { sql } from "drizzle-orm";
 import { getDb } from "./db";
 import { env } from "./env";
+import { databaseUrl } from "./db/url";
 
 export interface Check {
   name: string;
@@ -14,19 +15,19 @@ export interface Check {
 export async function healthChecks(): Promise<Check[]> {
   let dbOk = false;
   let dbDetail = "Not set";
-  if (process.env.DATABASE_URL || !process.env.VERCEL) {
+  if (databaseUrl() || !process.env.VERCEL) {
     try {
       const db = await getDb();
       await db.execute(sql`select 1`);
       dbOk = true;
-      dbDetail = process.env.DATABASE_URL ? "Connected" : "Local dev database";
+      dbDetail = databaseUrl() ? "Connected" : "Local dev database";
     } catch (e) {
       dbDetail = `Error: ${String(e).slice(0, 120)}`;
     }
   }
   const stripeOk = !!env.stripeSecret && !!env.stripeWebhookSecret;
   return [
-    { name: "Database (Neon)", ok: dbOk, detail: dbDetail, fix: "Vercel → Storage → Create → Neon, connect to this project, then redeploy." },
+    { name: "Database", ok: dbOk, detail: dbDetail, fix: "Vercel → Storage → connect Supabase (or Neon) to this project, then redeploy." },
     {
       name: "Payments (Stripe)",
       ok: stripeOk || env.allowMockPayments,

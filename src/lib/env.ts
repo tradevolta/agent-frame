@@ -2,7 +2,7 @@
 // whole purchase → upload → generate → deliver flow runs without API keys.
 export const env = {
   isProd: process.env.NODE_ENV === "production",
-  databaseUrl: process.env.DATABASE_URL,
+  databaseUrl: process.env.DATABASE_URL || process.env.POSTGRES_URL,
   stripeSecret: process.env.STRIPE_SECRET_KEY,
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
   referralCouponId: process.env.STRIPE_REFERRAL_COUPON_ID,
