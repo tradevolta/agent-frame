@@ -19,13 +19,7 @@ async function create(): Promise<DB> {
     return drizzle(neon(url), { schema }) as unknown as DB;
   }
   if (url) {
-    const { default: postgres } = await import("postgres");
-    const { drizzle } = await import("drizzle-orm/postgres-js");
-    const { url: clean, ssl } = cleanPgUrl(url);
-    // prepare:false is required behind transaction-mode poolers (Supabase :6543).
-    // Small pool per serverless instance; the pooler does the real pooling.
-    const client = postgres(clean, { ssl, prepare: false, max: 3, idle_timeout: 20 });
-    return drizzle(client, { schema }) as unknown as DB;
+    return connectPostgres(url);
   }
   if (process.env.VERCEL) {
     // PGlite needs a writable, persistent disk; serverless has neither.
@@ -41,6 +35,41 @@ async function create(): Promise<DB> {
   const db = drizzle(client, { schema });
   await migrate(db, { migrationsFolder: "drizzle" });
   return db as unknown as DB;
+}
+
+/** Last connection problem, shown on /admin so failures are diagnosable without logs. */
+export const dbDiagnostics: { host?: string; error?: string } = {};
+
+/**
+ * Supabase gives a pooled URL (POSTGRES_URL) and a direct/session one
+ * (POSTGRES_URL_NON_POOLING). Use the pooled one, but verify it answers
+ * quickly and fall back to the other if it doesn't.
+ */
+async function connectPostgres(primary: string): Promise<DB> {
+  const { default: postgres } = await import("postgres");
+  const { drizzle } = await import("drizzle-orm/postgres-js");
+  const candidates = [primary, process.env.POSTGRES_URL_NON_POOLING].filter(
+    (u, i, all): u is string => !!u && all.indexOf(u) === i,
+  );
+  const errors: string[] = [];
+  for (const candidate of candidates) {
+    const { url: clean, ssl } = cleanPgUrl(candidate);
+    const host = new URL(clean).host;
+    // prepare:false is required behind transaction-mode poolers (Supabase :6543).
+    const client = postgres(clean, { ssl, prepare: false, max: 3, idle_timeout: 20, connect_timeout: 8 });
+    try {
+      await client`select 1`;
+      dbDiagnostics.host = host;
+      dbDiagnostics.error = errors.length ? errors.join(" | ") : undefined;
+      return drizzle(client, { schema }) as unknown as DB;
+    } catch (err) {
+      errors.push(`${host}: ${String((err as Error)?.message ?? err).slice(0, 200)}`);
+      console.error("[db] connection failed", host, err);
+      await client.end({ timeout: 1 }).catch(() => {});
+    }
+  }
+  dbDiagnostics.error = errors.join(" | ");
+  throw new Error(`Database connection failed. ${dbDiagnostics.error}`);
 }
 
 export function getDb(): Promise<DB> {

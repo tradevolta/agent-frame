@@ -11,6 +11,7 @@ import { healthChecks } from "@/lib/health";
 
 export const metadata: Metadata = { title: "Admin", robots: { index: false } };
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 export default async function Admin() {
   const checks = await healthChecks();
@@ -33,9 +34,22 @@ export default async function Admin() {
           ))}
         </ul>
       </section>
-      {dbReady ? <Dashboard /> : <p className="mt-6 text-sm text-muted">Orders, teams, leads and sample photos appear here once the database is connected.</p>}
+      {dbReady ? <SafeDashboard /> : <p className="mt-6 text-sm text-muted">Orders, teams, leads and sample photos appear here once the database is connected.</p>}
     </div>
   );
+}
+
+async function SafeDashboard() {
+  try {
+    return await Dashboard();
+  } catch (err) {
+    console.error("[admin] dashboard failed", err);
+    return (
+      <p className="mt-6 rounded-lg bg-red-50 p-4 text-sm text-bad dark:bg-red-950/40">
+        The dashboard couldn&apos;t load: {String((err as Error)?.message ?? err).slice(0, 500)}
+      </p>
+    );
+  }
 }
 
 async function Dashboard() {

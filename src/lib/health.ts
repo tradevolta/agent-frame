@@ -1,6 +1,6 @@
 import "server-only";
 import { sql } from "drizzle-orm";
-import { getDb } from "./db";
+import { dbDiagnostics, getDb } from "./db";
 import { env } from "./env";
 import { databaseUrl } from "./db/url";
 import { emailProvider } from "./email";
@@ -19,11 +19,16 @@ export async function healthChecks(): Promise<Check[]> {
   if (databaseUrl() || !process.env.VERCEL) {
     try {
       const db = await getDb();
-      await db.execute(sql`select 1`);
+      await Promise.race([
+        db.execute(sql`select 1`),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("query timed out after 10s")), 10_000)),
+      ]);
       dbOk = true;
-      dbDetail = databaseUrl() ? "Connected" : "Local dev database";
+      dbDetail = databaseUrl()
+        ? `Connected${dbDiagnostics.host ? ` via ${dbDiagnostics.host}` : ""}${dbDiagnostics.error ? ` (fallback used; first attempt: ${dbDiagnostics.error})` : ""}`
+        : "Local dev database";
     } catch (e) {
-      dbDetail = `Error: ${String(e).slice(0, 120)}`;
+      dbDetail = `Error: ${String((e as Error)?.message ?? e).slice(0, 400)}`;
     }
   }
   const stripeOk = !!env.stripeSecret && !!env.stripeWebhookSecret;
