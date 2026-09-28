@@ -4,6 +4,7 @@ import { FreeTool } from "./free-tool";
 export const metadata: Metadata = {
   title: "Free Just Listed Graphic Maker for Realtors",
   description: "Make a ready-to-post Just Listed graphic with your photo, name and brokerage in 30 seconds. Free, no design skills needed.",
+  alternates: { canonical: "/free-just-listed" },
 };
 
 export default function FreeJustListed() {

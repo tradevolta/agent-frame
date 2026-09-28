@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/brand-kit/**": ["./assets/fonts/**"],
     "/api/free-graphic": ["./assets/fonts/**"],
+    "/opengraph-image": ["./assets/fonts/**"],
+    "/styles/[style]/opengraph-image": ["./assets/fonts/**"],
+    "/blog/[slug]/opengraph-image": ["./assets/fonts/**"],
+    "/realtor-headshots/[city]/opengraph-image": ["./assets/fonts/**"],
   },
   images: {
     remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com" }],

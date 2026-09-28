@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { brand } from "@/lib/brand";
 
-export const metadata: Metadata = { title: "Privacy Policy" };
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+  description: "How AgentFrame handles your selfies, headshots and account data. Selfies are deleted automatically after 7 days.",
+  alternates: { canonical: "/privacy" },
+};
 
 export default function Privacy() {
   return (

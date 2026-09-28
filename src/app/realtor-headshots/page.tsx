@@ -4,7 +4,8 @@ import { CITIES } from "@/content/cities";
 
 export const metadata: Metadata = {
   title: "Realtor Headshots by City",
-  description: "AI realtor headshots and brand kits for agents across North Carolina and the Southeast.",
+  description: "AI realtor headshots and brand kits for agents across North Carolina and the Southeast, with styles picked for each market.",
+  alternates: { canonical: "/realtor-headshots" },
 };
 
 export default function CitiesIndex() {

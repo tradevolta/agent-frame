@@ -1,19 +1,23 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Camera, Clock, ShieldCheck, ArrowsClockwise, UploadSimple, Sparkle, DownloadSimple } from "@phosphor-icons/react/dist/ssr";
 import { STYLES } from "@/lib/styles";
-import { brand } from "@/lib/brand";
+import { appUrl, brand } from "@/lib/brand";
 import { PLANS, formatUsd } from "@/lib/plans";
 import { StyleCard } from "@/components/samples";
 import { Pricing } from "@/components/pricing";
 import { Faq, faqJsonLd } from "@/components/faq";
 import { NewsletterForm } from "@/components/newsletter-form";
 import { getSampleUrls } from "@/lib/samples";
+import { JsonLd } from "@/lib/seo";
 
 const DEMO = (t: string) => `/api/brand-kit-demo/${t}`;
 
 // Re-render at most every 5 minutes so newly generated samples show up.
 export const revalidate = 300;
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function Home() {
   const samples = await getSampleUrls();
@@ -23,18 +27,21 @@ export default async function Home() {
     name: `${brand.name} AI Realtor Headshots`,
     description: "AI headshots and marketing brand kit for real estate agents.",
     brand: { "@type": "Brand", name: brand.name },
+    url: appUrl("/"),
+    image: appUrl("/opengraph-image"),
     offers: [PLANS.starter, PLANS.pro].map((p) => ({
       "@type": "Offer",
       name: p.name,
       price: (p.priceCents / 100).toFixed(2),
       priceCurrency: "USD",
       availability: "https://schema.org/InStock",
+      url: appUrl("/#pricing"),
     })),
   };
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([productLd, faqJsonLd()]) }} />
+      <JsonLd data={[productLd, faqJsonLd()]} />
 
       {/* Hero: split, value prop left, real product output right */}
       <section className="mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-12 md:grid-cols-[1.1fr_1fr] md:pt-20">
@@ -125,7 +132,9 @@ export default async function Home() {
         <p className="mt-3 max-w-[60ch] text-muted">Generic headshot apps give you corporate gray. You sell homes, so your photos should look like it.</p>
         <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {STYLES.map((s) => (
-            <StyleCard key={s.id} style={s} src={samples[s.id]} />
+            <Link key={s.id} href={`/styles/${s.id}`} className="rounded-2xl transition-opacity duration-200 hover:opacity-90">
+              <StyleCard style={s} src={samples[s.id]} />
+            </Link>
           ))}
         </div>
         {Object.keys(samples).length ? (

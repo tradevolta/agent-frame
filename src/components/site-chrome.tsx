@@ -42,6 +42,7 @@ export function SiteFooter() {
           <Link href="/#pricing">Pricing</Link>
           <Link href="/teams">Brokerage teams</Link>
           <Link href="/free-just-listed">Free Just Listed maker</Link>
+          <Link href="/styles">Headshot styles</Link>
           <Link href="/realtor-headshots">Headshots by city</Link>
         </div>
         <div className="flex flex-col md:gap-2">

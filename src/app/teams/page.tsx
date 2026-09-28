@@ -7,6 +7,7 @@ import { TeamForm } from "./team-form";
 export const metadata: Metadata = {
   title: "Brokerage & Team Headshots",
   description: `Matching AI headshots and brand kits for your whole brokerage. ${formatUsd(PLANS.team.priceCents)} per agent, one invite link, one invoice.`,
+  alternates: { canonical: "/teams" },
 };
 
 export default function TeamsPage() {

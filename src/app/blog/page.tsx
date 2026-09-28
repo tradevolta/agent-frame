@@ -4,7 +4,8 @@ import { POSTS } from "@/content/posts";
 
 export const metadata: Metadata = {
   title: "Guides for Real Estate Agents",
-  description: "Headshot tips, social media ideas and marketing guides for real estate agents.",
+  description: "Headshot tips, what to wear, backgrounds, social media ideas and marketing guides for real estate agents.",
+  alternates: { canonical: "/blog" },
 };
 
 export default function BlogIndex() {
@@ -12,7 +13,7 @@ export default function BlogIndex() {
     <div className="mx-auto max-w-3xl px-4 py-14">
       <h1 className="font-display text-3xl md:text-4xl">Guides for agents</h1>
       <div className="mt-8 space-y-4">
-        {POSTS.map((p) => (
+        {[...POSTS].reverse().map((p) => (
           <Link key={p.slug} href={`/blog/${p.slug}`} className="card block p-6 hover:border-accent">
             <h2 className="text-lg font-semibold">{p.title}</h2>
             <p className="mt-1 text-sm text-muted">{p.description}</p>

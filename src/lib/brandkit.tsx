@@ -1,6 +1,5 @@
+import { ogFonts } from "./og-fonts";
 import { ImageResponse } from "next/og";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import type { AgentProfile } from "./db/schema";
 import { brand } from "./brand";
 
@@ -27,16 +26,7 @@ export const TEMPLATES: TemplateDef[] = [
   { id: "linkedin-banner", name: "LinkedIn / Facebook Cover", width: 1584, height: 396, needs: [] },
 ];
 
-// Inter (SIL OFL) in real weights; next/og's built-in font has no bold.
-const fontDir = path.join(process.cwd(), "assets", "fonts");
-const fontsPromise = Promise.all(
-  ([400, 700, 800] as const).map(async (weight) => ({
-    name: "Inter",
-    data: await readFile(path.join(fontDir, `inter-latin-${weight}-normal.woff`)),
-    weight,
-    style: "normal" as const,
-  })),
-);
+const fontsPromise = ogFonts();
 
 export function getTemplate(id: string) {
   return TEMPLATES.find((t) => t.id === id);

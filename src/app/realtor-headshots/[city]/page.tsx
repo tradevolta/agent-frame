@@ -8,6 +8,8 @@ import { StyleCard } from "@/components/samples";
 import { Pricing } from "@/components/pricing";
 import { Faq } from "@/components/faq";
 import { getSampleUrls } from "@/lib/samples";
+import { appUrl } from "@/lib/brand";
+import { JsonLd, breadcrumbLd } from "@/lib/seo";
 
 export function generateStaticParams() {
   return CITIES.map((c) => ({ city: c.slug }));
@@ -19,8 +21,8 @@ export async function generateMetadata({ params }: PageProps<"/realtor-headshots
   const city = getCity((await params).city);
   if (!city) return {};
   return {
-    title: `Realtor Headshots in ${city.name}, ${city.stateCode}: AI Headshots from ${formatUsd(PLANS.starter.priceCents)}`,
-    description: `Professional real estate agent headshots for ${city.name}, ${city.stateCode} agents, with no photographer needed. 12 realtor styles plus Just Listed & Open House graphics. Ready in about an hour.`,
+    title: `AI Realtor Headshots in ${city.name}, ${city.stateCode}`,
+    description: `Headshots for ${city.name}, ${city.stateCode} real estate agents without a photographer: 12 realtor styles plus listing graphics, from ${formatUsd(PLANS.starter.priceCents)}.`,
     alternates: { canonical: `/realtor-headshots/${city.slug}` },
   };
 }
@@ -32,8 +34,21 @@ export default async function CityPage({ params }: PageProps<"/realtor-headshots
   const samples = await getSampleUrls();
   const nearby = (city.nearby ?? []).map(getCity).filter((c) => !!c);
 
+  const serviceLd = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: `AI realtor headshots in ${city.name}, ${city.stateCode}`,
+    serviceType: "AI headshot photography",
+    description: city.blurb,
+    provider: { "@id": appUrl("/#organization") },
+    areaServed: { "@type": "City", name: city.name, containedInPlace: { "@type": "State", name: city.state } },
+    url: appUrl(`/realtor-headshots/${city.slug}`),
+    offers: { "@type": "Offer", price: (PLANS.starter.priceCents / 100).toFixed(2), priceCurrency: "USD", url: appUrl("/#pricing") },
+  };
+
   return (
     <>
+      <JsonLd data={[serviceLd, breadcrumbLd([["Headshots by city", "/realtor-headshots"], [city.name, `/realtor-headshots/${city.slug}`]])]} />
       <section className="mx-auto max-w-6xl px-4 pb-8 pt-14">
         <nav className="text-xs text-muted"><Link href="/realtor-headshots" className="inline-block py-3">Headshots by city</Link> / {city.name}</nav>
         <h1 className="mt-3 max-w-3xl font-display text-4xl md:text-5xl leading-tight">Realtor headshots for {city.name}, {city.stateCode} agents</h1>
@@ -47,7 +62,11 @@ export default async function CityPage({ params }: PageProps<"/realtor-headshots
       <section className="mx-auto max-w-6xl px-4 py-8">
         <h2 className="font-display text-2xl">Popular styles with {city.name} agents</h2>
         <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-          {styles.map((s) => <StyleCard key={s.id} style={s} src={samples[s.id]} />)}
+          {styles.map((s) => (
+            <Link key={s.id} href={`/styles/${s.id}`} className="rounded-2xl transition-opacity duration-200 hover:opacity-90">
+              <StyleCard style={s} src={samples[s.id]} />
+            </Link>
+          ))}
         </div>
       </section>
       <Pricing />

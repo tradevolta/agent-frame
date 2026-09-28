@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { brand } from "@/lib/brand";
 
-export const metadata: Metadata = { title: "Terms & Refunds" };
+export const metadata: Metadata = {
+  title: "Terms & Refunds",
+  description: "AgentFrame terms of service and refund policy for AI headshots, brand kits, team seats and subscriptions.",
+  alternates: { canonical: "/terms" },
+};
 
 export default function Terms() {
   return (

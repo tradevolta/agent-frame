@@ -74,7 +74,39 @@ To rename, set `NEXT_PUBLIC_BRAND_NAME`, `NEXT_PUBLIC_BRAND_DOMAIN`, `NEXT_PUBLI
 - **Google Ads** on high-intent terms: "realtor headshots near me", "ai headshots for realtors" ($5–10/day).
 - Add an affiliate program (Rewardful or PromoteKit, both integrate with Stripe) for real estate coaches and YouTubers.
 
-## 4. Metrics to watch (all visible in `/admin`)
+## 4. SEO: what's built and what you do
+
+**Built in:** canonical URLs on every page, a sitemap (`/sitemap.xml`, 57 URLs), `robots.txt`, share images for
+every page, structured data (Organization, WebSite, Product, FAQ, Service with city, Article, breadcrumbs), `/llms.txt`
+for AI search, and three kinds of landing pages:
+
+| Pages | Targets searches like |
+|---|---|
+| `/styles/[style]` (12) | "white background realtor headshot", "outdoor real estate headshots", "coastal realtor headshots" |
+| `/realtor-headshots/[city]` (27) | "realtor headshots Raleigh", "real estate headshots Wake Forest" |
+| `/blog/[slug]` (10 guides) | "what to wear for realtor headshots", "best background for real estate headshot", "realtor email signature" |
+
+**Your steps (once, about 30 minutes):**
+1. **Google Search Console** → Add property → Domain `realagentframe.com` → verify with the DNS TXT record
+   (add it in Vercel → Domains → realagentframe.com → DNS records). Or use the URL-prefix method and put the code
+   in `GOOGLE_SITE_VERIFICATION` in Vercel.
+2. In Search Console → **Sitemaps** → submit `https://www.realagentframe.com/sitemap.xml`.
+3. **URL Inspection** → request indexing for `/`, `/styles`, `/free-just-listed` and two or three guides.
+4. **Bing Webmaster Tools** → import from Google Search Console (one click). Bing also feeds ChatGPT search
+   and DuckDuckGo.
+5. Check **Enhancements** in Search Console after 1-2 weeks for structured data errors.
+
+**Ongoing (about an hour a week):**
+- Publish one new guide a week in `src/content/posts.tsx` (ideas: "realtor headshot poses", "headshots for new agents",
+  "real estate business card ideas", "Open House social media posts"). Link each to one or two style pages.
+- Get links: every free Just Listed graphic carries a watermark link; list the free tool in directories (section 3);
+  ask brokerages and real estate schools you partner with to link to `/teams`.
+- Real customer headshots (with permission) on style pages will beat the AI-generated samples for trust and clicks.
+- City pages share a template. Before adding more, give existing ones unique local content (e.g. a real local
+  agent's quote or brokerage partner), or Google may treat them as thin. Keep the count modest.
+- In Search Console → Performance, find queries with many impressions but few clicks and improve those pages' titles.
+
+## 5. Metrics to watch (all visible in `/admin`)
 
 | Metric | Healthy target |
 |---|---|
@@ -85,7 +117,7 @@ To rename, set `NEXT_PUBLIC_BRAND_NAME`, `NEXT_PUBLIC_BRAND_DOMAIN`, `NEXT_PUBLI
 | Refund rate | under 5% |
 | Share of Pro plan among orders | 50%+ (Brand Kit is the upsell) |
 
-## 5. Pricing experiments to try after 50 sales
+## 6. Pricing experiments to try after 50 sales
 - Raise Pro to $59 (competitors charge $29–75 for headshots *without* marketing graphics).
 - Offer an "Express 30-min" add-on (+$15) using faster training settings.
 - Add seasonal Brand Kit template packs (spring market, holidays) to drive Always Fresh subscriptions.

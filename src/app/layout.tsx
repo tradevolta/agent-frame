@@ -4,6 +4,7 @@ import "./globals.css";
 import { brand, appUrl } from "@/lib/brand";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 import { RefCapture } from "@/components/ref-capture";
+import { JsonLd, organizationLd, websiteLd } from "@/lib/seo";
 
 const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
@@ -17,6 +18,11 @@ export const metadata: Metadata = {
     "Studio-quality AI headshots made for real estate agents, plus ready-to-post Just Listed, Open House and Sold graphics. From $29. No photographer, no scheduling.",
   openGraph: { siteName: brand.name, type: "website" },
   twitter: { card: "summary_large_image" },
+  // Search Console / Bing Webmaster ownership codes (the content="" value of their meta tag).
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
+    other: process.env.BING_SITE_VERIFICATION ? { "msvalidate.01": process.env.BING_SITE_VERIFICATION } : undefined,
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -26,6 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <a href="#main" className="sr-only rounded-lg bg-accent px-4 py-2 text-on-accent focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50">
           Skip to content
         </a>
+        <JsonLd data={[organizationLd(), websiteLd()]} />
         <RefCapture />
         <SiteHeader />
         <main id="main" className="flex-1">{children}</main>
