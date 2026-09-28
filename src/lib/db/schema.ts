@@ -121,6 +121,8 @@ export const photos = pgTable(
     url: text("url").notNull(),
     pathname: text("pathname"),
     favorite: boolean("favorite").notNull().default(false),
+    /** 4x-upscaled copy for large print formats, made on first print download. */
+    printUrl: text("print_url"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("photos_order_idx").on(t.orderId)],

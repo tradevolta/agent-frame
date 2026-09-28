@@ -1,0 +1,1 @@
+ALTER TABLE "photos" ADD COLUMN "print_url" text;

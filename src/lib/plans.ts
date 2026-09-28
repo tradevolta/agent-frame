@@ -40,6 +40,7 @@ export const PLANS: Record<PlanId, Plan> = {
       "All 12 realtor styles",
       "Brand Kit: Just Listed, Open House, Sold & more",
       "Business card & email signature graphics",
+      "Print-ready files: cards, postcards, flyers, sign riders",
       "3 free redos",
       "Commercial use license",
     ],

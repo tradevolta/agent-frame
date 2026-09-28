@@ -103,6 +103,7 @@ src/lib/payments.ts     Stripe checkout for orders, teams, subscriptions + webho
 src/lib/ai.ts           fal.ai queue wrapper (+ mock)
 src/lib/styles.ts       the 12 realtor styles and prompt builder
 src/lib/brandkit.tsx    Brand Kit graphic templates (next/og)
+src/lib/print.tsx       print-ready PDFs (300 DPI, 1/8" bleed): business card, postcard, flyer, sign rider, headshot prints
 src/lib/accounts.ts     team seats + Always Fresh subscription shoots
 src/app/studio/[token]  customer studio (upload, progress, gallery, redo, brand kit)
 src/app/admin           revenue, costs, orders, retries, leads CSV (password login)

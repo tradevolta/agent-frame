@@ -36,6 +36,13 @@
       "when": 1790546227594,
       "tag": "0004_retry_queue",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790570341291,
+      "tag": "0005_photo_print_url",
+      "breakpoints": true
     }
   ]
 }

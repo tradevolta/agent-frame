@@ -89,6 +89,24 @@ export function extractLoraUrl(output: unknown): string | null {
   return o?.diffusers_lora_file?.url ?? null;
 }
 
+export const UPSCALE_MODEL = "fal-ai/esrgan";
+
+/**
+ * 4x photo upscale (Real-ESRGAN) for large prints: generated headshots are
+ * about 768x1024, too small for a sign rider or an 8x10 at 300 DPI.
+ * Returns fal's temporary URL; callers persist it. Mock mode returns the input.
+ */
+export async function upscaleImage(imageUrl: string): Promise<string> {
+  if (isMockAi()) return imageUrl;
+  const fal = await falClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const res = await fal.subscribe(UPSCALE_MODEL as any, { input: { image_url: imageUrl, scale: 4, model: "RealESRGAN_x4plus", face: true } as any });
+  const out = res.data as { image?: { url?: string }; images?: { url: string }[] };
+  const url = out.image?.url ?? out.images?.[0]?.url;
+  if (!url) throw new Error("Upscaler returned no image");
+  return url;
+}
+
 export function extractImages(output: unknown): string[] {
   const o = output as { images?: { url: string }[]; has_nsfw_concepts?: boolean[] } | null;
   if (!o?.images) return [];
